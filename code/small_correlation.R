@@ -5,20 +5,20 @@
 # calculate the correlation between the predictions
 
 rm(list=ls())
-setwd("~/Documents/ds/sem4/thesis/trees-02-ranger/03")
+# setwd("~/Documents/ds/sem4/thesis/trees-02-ranger/03") # works on my laptop
 
 library(ranger)
 library(caret)
 library(e1071)
 library(cluster)
 library(dplyr)
-#source('distance-matrices-02.R') # my own code
+
 source('subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
 source('helper-functions.R')
 
 # read and transform the data
 
-df <- read.csv('Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
+df <- read.csv('../data/Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
 
 df$Sex<-as.factor(df$Sex)
 df$Chestpaintype<-as.factor(df$Chestpaintype)
