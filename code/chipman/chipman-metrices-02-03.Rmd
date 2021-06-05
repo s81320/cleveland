@@ -18,7 +18,7 @@ Make a t-test to check if sub-forest and clustered sub-forest the same mean. Or 
 
 ```{r}
 rm(list=ls())
-setwd("~/Documents/ds/sem4/thesis/trees-02-ranger/03")
+# setwd("~/Documents/ds/sem4/thesis/trees-02-ranger/03")
 ```
 
 Required libraries.
@@ -41,7 +41,7 @@ source('helper-functions.R')
 
 Data, read and split.
 ```{r}
-df <- read.csv('Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
+df <- read.csv('../../data/Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
 
 df$Sex<-as.factor(df$Sex)
 df$Chestpaintype<-as.factor(df$Chestpaintype)
