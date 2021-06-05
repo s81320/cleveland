@@ -41,7 +41,7 @@ source('helper-functions.R')
 
 Data, read and split.
 ```{r}
-df <- read.csv('../../data/Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
+df <- read.csv('../../../data/Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
 
 df$Sex<-as.factor(df$Sex)
 df$Chestpaintype<-as.factor(df$Chestpaintype)
