@@ -19,7 +19,69 @@ dim(df) # 303 , 11 with 10 predictor variables
 head(df)
 table(is.na(df)) # quick check for missing data
 
-load('doc-500trees-10rep.rda')
+chipmanAccRatios<- function(metric, cutoffs, cluster.k, forest, dm2, dfv){
+  # dfv are the observations in the validation set, not just indices
+  # we need this to calculate accuracy (and accRatio) of the (clustered) subforest
+  
+  doc2<-data.frame()
+  #print(metric)
+  for(cutoff in cutoffs){
+    #print(cutoff)
+    div.added.trees <- ctdata(dm2,cutoff)$selectTrees
+    #print(div.added.trees)
+    size.sf<-length(div.added.trees)
+    
+    orig.trees <- c(1,div.added.trees)
+    # the first tree is the initial tree to which we add trees, it is not included in the indices about trees we select which range 2,3,4,...
+    # this is pretty arbitrary, always including tree nr 1.
+    # it made sense (in chipman) when trees were pruned (and a little robust) 
+    # and ordered by performance (accuracy) on the validation set
+    
+    #print('selected trees')
+    #print(orig.trees)
+    acc.sf <- apsf(forest, orig.trees, df[val,]) # a p sf : accuracy prediction sub-forest
+  
+    for(k in cluster.k){
+      if(k<size.sf){
+        # cluster the selected trees
+        pam.obj <- cluster::pam(dm2[orig.trees,orig.trees] 
+                          , k=k
+                          , diss=TRUE
+                          , medoids='random'
+                          , nstart = 5)
+  
+        acc.sf.pam <- apsf(forest, pam.obj$medoids, dfv)
+  
+        # do it differently:
+        # append rows of numeric values , in the very end add a column with the string for the metric? or make the metric a number : 0 instead of d0...
+        new.row <- c( accff
+                  , cutoff
+                  , size.sf
+                  , acc.sf %>% round(4)
+                  , ( acc.sf / accff ) %>% round(4) 
+                  , k
+                  , acc.sf.pam  %>% round(4)
+                  , ( acc.sf.pam / acc.sf ) %>% round(4) 
+                  , ( acc.sf.pam / accff ) %>% round(4) 
+                  ) 
+    
+        doc2 <- rbind(doc2, new.row)
+        
+      }else{
+        if(k == min(cluster.k)){ message(paste('no clustering for cutoff', cutoff, 'using metric' , metric, '. Subforest too small with size', size.sf, '.')) }
+        break}
+    }
+  }
+  if(nrow(doc2)>0){
+    names(doc2) <- c('acc.ff','cutoff','size.sf','acc.sf','accRatio.sf','size.sf.pam','acc.sf.pam','accRatio.sf.pam.sf','accRatio.sf.pam.ff')
+    # set metric as attribute
+    attr(doc2,'metric')<- metric
+  }
+  
+return(doc2)
+  }
+
+load('doc-500trees.rda') # or whatever data was generated 
 
 cAR<-list()
 
