@@ -13,12 +13,12 @@ library(e1071)
 library(cluster)
 library(dplyr)
 
-source('subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
-source('helper-functions.R')
+source('code/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
+source('code/helper-functions.R')
 
 # read and transform the data
 
-df <- read.csv('../data/Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
+df <- read.csv('data/Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
 
 df$Sex<-as.factor(df$Sex)
 df$Chestpaintype<-as.factor(df$Chestpaintype)
@@ -57,6 +57,10 @@ rg <- ranger(CAD~.
              , num.trees=500
              , importance='impurity'
              #, mtry = 3
+             # setting both of the following parameters stabilises performance on val and test set 
+             # , introduces some robustness ... on both seed2 1865, 1955
+             , max.depth = 5 
+             , min.node.size = 5 # setiing this to 5 or 10 increases correlation to about 20% (still weak!)
 )
 
 # compare to accuracy on test and validation set
@@ -99,14 +103,14 @@ plot(jitter(a1)
 lm.obj<-lm(a2~0+a1) # explain test accuracy by validation accuracy
 summary(lm.obj)
 # the estimated slope is close to 1 with a really small p-value (good for us, highly significant)
-# R-squared (explained variance) is small, also good for us.
+# R-squared (explained variance) is large, also good for us.
 
 # The residual standard error at 8.5% is what has bothered me before: it is too big for what I need.
 
 # linear models should be applied when x values are deterministic. This is not the case here!
 # how much does that matter??
 
-plot(lm.obj)
+#plot(lm.obj)
 # interpretation:
 # Residuals vs fitted: clearly not random, with a strong tendency to decrease (red line) : regression to the mean, OK:
 # if a tree performs above average on the validation set then it is likely to perform worde on the test set (because it cannot get much better)
@@ -127,9 +131,9 @@ plot(lm.obj)
 # poor on validation set, great on test set
 
 # check how the slope is calculated
-sum(a1*a2) / sum(a1*a1) ; lm.obj$coefficients
+#sum(a1*a2) / sum(a1*a1) ; lm.obj$coefficients
 # covariance
-cov(a1,a2) ; sum((a1-mean(a1))*(a2-mean(a2)))/(length(a1)-1) # slightly different from mean((a1-mean(a1))*(a2-mean(a2)))
+#cov(a1,a2) ; sum((a1-mean(a1))*(a2-mean(a2)))/(length(a1)-1) # slightly different from mean((a1-mean(a1))*(a2-mean(a2)))
 # correlation
 stats::cor(a1,a2) ; cov(a1,a2) / (sd(a1)*sd(a2)) # in [-1,1] ,  pretty zero'ish... hmpf.
 
@@ -158,6 +162,8 @@ rg <- ranger(CAD~.
              , num.trees=500
              , importance='impurity'
              #, mtry = 3
+             , max.depth = 5
+             , min.node.size = 5
 )
 
 doc3 <- data.frame()
@@ -227,6 +233,8 @@ for(i in 1:N){
                , num.trees=500
                , importance='impurity'
                #, mtry = 3
+             # , max.depth = 5
+             #  , min.node.size = 5
   )
   
   # all rows except for training
@@ -300,6 +308,8 @@ doc3.lm.2<-lm(acc.test~acc.val , data=doc3) # 2 parameter regression line (inter
 abline(doc3.lm.2, lty=3)
 
 summary(doc3.lm.1) # residual Std error pretty much the same as for accuracy of trees :  lm.obj
+summary(doc3.lm.2) # pooooor R squared!
+
 ###################################################################
 ## keep data partition fixed and build a new forest in each loop ##
 ###################################################################
@@ -335,6 +345,9 @@ for(i in 1:N){
                , num.trees=500
                , importance='impurity'
                #, mtry = 3
+               # with the following 2 parameters there is no variation at all over the forests
+              # , max.depth = 5
+              # , min.node.size = 5
   )
   
   pv<-predict(rg$forest,df[val,])$predictions %>% acc(.,df[val,'CAD'])
@@ -392,3 +405,4 @@ abline(doc4.lm.2, lty=3)
 # compared to the previous plot, this one has a much smaller cloud / much smaller diameter
 # this is: the forest introduces much less variation / is much less important than the distribution of the val / test set.
 summary(doc4.lm.1) # much smaller residual std error:  2%
+
