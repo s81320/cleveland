@@ -1,0 +1,327 @@
+---
+title: "Chipman, George, McCulloch 1998"
+author: 'Silke Meiner'
+date: '05-June-2021'
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: 2
+---
+
+
+```{r}
+rm(list=ls())
+setwd("~/Documents/ds/sem4/thesis/trees-02-ranger/04-chipman")
+```
+
+Required libraries.
+```{r}
+# install.packages('ranger')
+library(ranger)
+library(caret)
+library(e1071)
+library(cluster)
+library(dplyr)
+```
+
+Source code.
+```{r}
+source('distance-matrices-02.R') # my own code
+source('subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
+source('chipman.R')
+source('helper-functions.R')
+```
+
+read / load
+* the cleceland data
+* stratified data split: train, val and test
+* a random forest of class ranger
+* distance matrices from 4 metrices (d0,d1,d2 of Banerjee, sb: Shannon-Banks metric in Chipman paper)
+```{r}
+load('doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+N <- length(docN)
+
+train<-docN[[1]]$train
+val<-docN[[1]]$val
+test<-docN[[1]]$test
+rg<-docN[[1]]$ranger
+dm<-docN[[1]]$distMatrices
+```
+
+Looking at the accuracy of the full forest on the validation and test set tells us what to expect when running a model that performed well on the validation set on the test set: It will have a tendency to perform similar to the full forest :)
+
+```{r}
+accff<-apsf(rg$forest, 1:rg$num.trees , df[val,]) # accuracy (of) predictions (infered by) sub-forest
+accff.test<-apsf(rg$forest, 1:rg$num.trees , df[test,])
+
+accff ; accff.test
+```
+
+How can we use these distances of trees to select representative trees from the forest? We will follow the Chipman, George, McCulloch paper of 1998.
+
+plots in Chipman: 
+* mds: the trees of the forest mapped in 2 dim
+* atp: added tree plot: starting with tree 1 (not in the plot) add trees to an increasing set of trees (the subforest). The plot shows for each added tree (starting with tree 2) the distances to the trees already selected.
+* ctp: closest tree plot which shows only the the tree(s) the added tree is closest to.
+
+```{r}
+mds(dm[['d1']][1:5,1:5])
+atp(dm[['d1']][1:5,1:5])
+ctplot(dm[['d1']][1:5,1:5])
+```
+
+This will be our visualisation for the accuracy ratios of the set of selected trees (the subforest of diverse trees) and the further reduced subforest (of cluster medoids. )
+```{r}
+plot2<- function(doc2){
+  x.grid<-1:nrow(doc2)
+
+  # cover the full range of accuracy ratios for the sub-forest of diverse trees and its clustered versions medoids
+  ylim<-c(min(c(doc2$accRatio.sf,doc2$accRatio.sf.pam.ff)),
+        max(c(1,doc2$accRatio.sf,doc2$accRatio.sf.pam.ff)))
+
+  plot(x.grid
+     , y=doc2$accRatio.sf
+     , ylim=ylim
+     , xlab='cutoff'
+     , ylab='accuracy ratios relative to full forest'
+     , main='subforest of diverse trees, original and clustered'
+     , xaxt='n')
+
+  axis(1, at =1:nrow(doc2), labels=doc2$cutoff)
+  
+  points(x.grid, doc2$accRatio.sf.pam.ff, col='blue')
+
+  abline(h=1,col='grey')
+
+  text(x=x.grid # this should plot the cluster sizes next to the blue accuracy dots
+     , y=doc2$accRatio.sf.pam.ff
+     , pos=4
+     , labels=doc2$size.sf.pam)
+
+  legend('bottomright'
+       , legend=c('subforest','clustered sf')
+       , col=c('black','blue')
+       , pch='o'
+       , cex=0.7)
+}
+```
+
+```{r}
+eval.on.test<-function(metric,cutoff,k=NA, doc=doc){
+  dm2<-doc[[metric]]
+
+  div.added.trees <- ctdata(dm2,cutoff)$selectTrees
+  size.sf<-length(div.added.trees)
+  print(paste('The selected sub-forest is of size',size.sf,'.'))
+  selected.trees <- c(1,div.added.trees)
+  
+  if(!is.na(k)){
+    pam.obj <- cluster::pam(dm2[selected.trees,selected.trees]
+                          , k=k
+                          , diss=TRUE
+                          , medoids='random'
+                          , nstart = 5)
+  
+    selected.trees <- pam.obj$medoids # update selected trees to cluster centers of selected trees
+  
+  }
+  return(apsf(rg$forest, selected.trees, df[test,]))
+}
+
+```
+
+# d0 metric
+```{r fig.height=15, fig.width=10}
+metric<-'d0'
+par(mfrow = c(2, 1))
+mds(dm[[metric]])
+ctplot(dm[[metric]])
+par(mfrow = c(1, 1))
+```
+
+
+```{r}
+metric<-'d0'
+cutoffs<-c(0.05,0.15)
+cluster.k<-c(5,7,11,13)
+set.seed(1871)
+cAR<-chipmanAccRatios(metric, cutoffs, cluster.k, rg$forest, dm[[metric]], df[val,]) # c hipman A ccuracy R atios
+cAR
+```
+
+
+```{r}
+plot2(cAR)
+```
+
+## Evaluation on test set
+
+There is no choice for the cutoff. We decide against clustering.
+
+```{r}
+metric<-'d0'
+cutoff<-0.05
+cluster.k<-13
+at<-eval.on.test(metric, cutoff, doc=dm)
+at ; at / accff.test
+at<-eval.on.test(metric, cutoff, cluster.k=cluster.k, doc=dm)
+at ; at / accff.test
+```
+
+This is a good result. Since the result is better than on the validation set, we are in some kind of luck. But, on the other hand, as suggested by the prediction on the validationset: we are close to 1. This is not luck, this was expected.
+
+## Hypothesis test (on val data)
+```{r}
+t.test(cAR$accRatio.sf.pam.ff, mu=0.95 , alternative='greater')
+```
+We start out conservatively and miserable: H0: the accuracy ratio is below 0.95. On a 5% level we can reject this hypothesis. What a relief!
+
+```{r}
+boxplot(cbind(cAR$accRatio.sf, cAR$accRatio.sf.pam.ff) , main='accuracy ratios for unclustered and clustered sub-forests')
+```
+
+# d1 metric
+
+```{r fig.height=15, fig.width=10}
+metric<-'d1'
+par(mfrow = c(2, 1))
+mds(dm[[metric]])
+ctplot(dm[[metric]])
+par(mfrow = c(1, 1))
+```
+
+```{r}
+cutoffs<-c(4500, 5000, 5500, 6000, 6500, 7000)
+cluster.k<-c(3,5,7,11,13)
+set.seed(1870)
+cAR<-chipmanAccRatios(metric, cutoffs, cluster.k, rg$forest, dm[[metric]], df[val,])
+cAR
+```
+
+```{r}
+plot2(cAR)
+```
+## Evaluation on test set
+
+We choose cutoff 6500 for its high accuracy ratio on the validation set and its relatively small size for the subforest.
+```{r}
+metric='d1'
+cutoff=6500
+
+at<-eval.on.test(metric, cutoff, doc=dm)
+at ; at / accff.test
+```
+
+Good result, too, accuracy ratio above 1.
+
+## Hypothesis test (on val data)
+```{r}
+t.test(cAR$accRatio.sf , mu=0.95, alternative = 'greater') # mean reliably >1 ? 
+t.test(cAR$accRatio.sf.pam.ff , mu=0.95 , alternative = 'greater') # mean (accRatio) > 1 ? CI
+
+#which method is better?
+t.test(cAR$accRatio.sf - cAR$accRatio.sf.pam.ff, mu=0 , alternative='greater') # positive CI => unclustered is better
+```
+```{r}
+boxplot(cbind(cAR$accRatio.sf, cAR$accRatio.sf.pam.ff) , main='accuracy ratios for unclustered and clustered sub-forests')
+```
+
+
+# d2 metric
+```{r fig.height=15, fig.width=10}
+metric<-'d2'
+par(mfrow = c(2, 1))
+mds(dm[[metric]])
+ctplot(dm[[metric]])
+par(mfrow = c(1, 1))
+```
+
+
+```{r}
+metric<-'d2'
+cutoffs<-c(40,44,48)
+cluster.k<-c(5,7,11,13)
+set.seed(1870)
+cAR<-chipmanAccRatios(metric, cutoffs, cluster.k, rg$forest, dm[[metric]], df[val,])
+cAR
+```
+
+```{r}
+plot2(cAR)
+```
+
+## Evaluation on test set
+
+We choose the optimal cutoff of 44 because of its size below 10% of the full forest and its accuracy ratio exceeding 1 (on the validation set).
+```{r}
+metric='d2'
+cutoff=44
+
+at<-eval.on.test(metric, cutoff, doc=dm)
+at ; at / accff.test
+```
+The accuracy ratio on the test set exceeds 0.95 but is below 1.
+
+## Hypothesis test (on val data)
+
+```{r}
+t.test(cAR$accRatio.sf , mu=0.95, alternative = 'greater') # mean reliably >1 ? 
+t.test(cAR$accRatio.sf.pam.ff , mu=0.95 , alternative = 'greater') # mean (accRatio) > 1 ? CI
+
+#which method is better?
+t.test(cAR$accRatio.sf - cAR$accRatio.sf.pam.ff, mu=0 , alternative='greater') # positive CI => unclustered is better
+```
+```{r}
+boxplot(cbind(cAR$accRatio.sf, cAR$accRatio.sf.pam.ff) , main='accuracy ratios for unclustered and clustered sub-forests')
+```
+# shannon banks metric
+
+```{r fig.height=15, fig.width=10}
+metric<-'sb'
+par(mfrow = c(2, 1))
+mds(dm[[metric]])
+ctplot(dm[[metric]])
+par(mfrow = c(1, 1))
+```
+
+
+```{r}
+metric<-'sb'
+cutoffs<-c(18,19,20)
+cluster.k<-c(5,7,11,13)
+# cluster.k<-c(5,10,15,20,25)
+set.seed(1870)
+cAR<-chipmanAccRatios(metric, cutoffs, cluster.k, rg$forest, dm[[metric]], df[val,])
+cAR
+```
+```{r}
+plot2(cAR)
+```
+## Evaluation on test set
+
+Optimal parameters are a large cutoff and no clustering: The accuracy ratio is above 1 on the validation set.
+
+
+```{r}
+metric='sb'
+cutoff=18
+at<-eval.on.test(metric, cutoff, doc=dm)
+at ; at / accff.test
+```
+
+
+## Hypothesis test (on val data)
+
+```{r}
+t.test(cAR$accRatio.sf , mu=0.95, alternative = 'greater') # mean reliably >1 ? 
+t.test(cAR$accRatio.sf.pam.ff , mu=0.95 , alternative = 'greater') # mean (accRatio) > 1 ? CI
+
+#which method is better?
+t.test(cAR$accRatio.sf - cAR$accRatio.sf.pam.ff, mu=0 , alternative='greater') # positive CI => unclustered is better
+```
+
+```{r}
+boxplot(cbind(cAR$accRatio.sf, cAR$accRatio.sf.pam.ff) , main='accuracy ratios for unclustered and clustered sub-forests')
+```
+
