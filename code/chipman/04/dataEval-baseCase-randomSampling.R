@@ -1,5 +1,5 @@
 rm(list=ls())
-setwd("~/Documents/ds/sem4/thesis/trees-02-ranger/04-chipman")
+# setwd("~/Documents/ds/sem4/thesis/trees-02-ranger/04-chipman")
 
 library(dplyr)
 library(ranger)
