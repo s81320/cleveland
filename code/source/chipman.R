@@ -37,14 +37,11 @@ atp<- function(D){
 }
 
 
-
-
-
 # closest tree data , will be used to plot 
 # the distance of the closest tree in the added tree plot
 
 ctdata<- function(D, cutoff=NA){
-  
+  print(paste('cutoff: ' , cutoff, is.na(cutoff)))
   if('matrix' %in% class(D)){
     if(nrow(D)!=ncol(D)) message('expecting a square matrix')
   }else{message('first argument should be a (square, symmetric) matrix')}
@@ -58,23 +55,37 @@ ctdata<- function(D, cutoff=NA){
   #print(paste('upper bound',upper.bound))
   D[lower.tri(D, diag=TRUE)] <- upper.bound
   
+  if(!is.na(cutoff)){
+    sT<- c(1) # _s_elected _T_rees : we start selecting only tree 1
+    cT<-c() # -c_losetst _T_rees : no tree is closest to the tree(s) selected up to now
+    for(tj in 2:ncol(D)){ # go through all trees not yet selected, column index of distance matrix
+      print(paste('tree : ' , tj))
+      print(paste('selected : ', list(sT)))
+      print(paste('distance : ', D[sT,tj]))
+      print(D[1:4,1:4])
+      if(min(D[sT,tj])>cutoff){
+        print('calling which')
+        print(which(D[sT,tj]==min(D[sT,tj]),arr.ind=TRUE)[[1]])
+        cT<- c(cT
+               ,which(D[sT,tj]==min(D[sT,tj]),arr.ind=TRUE)[[1]] %>% sT[.] %>% list()
+               # which returns indices relative to the selected Trees in sT
+               )
+        sT<- c(sT,tj) # update _after_ ct has been set
+        }
+    }
+  }
+  
   D<-D[,-1] # remove 1st column : it is the distance of the 1st tree to the 1st tree (=0)
   # D is no longer square , ncol(D) +1 = nrow(D)
   # column indices refer to trees (that might be added to the first tree: 1st col for 2nd tree, 2nd col for 3rd tree, ...)
   # row indices refer to the original trees 1,2,...
   
   sdist<-apply(D,2,min) # smallest distance (to closest tree for added tree) for trees 2,3,...
-  #print('distances')
-  #print(length(sdist))
-  #print(sdist[1:10])
-  # in apply : 2 : columns index fixed, move through rows when applying min : get the min of the column going through D
-  ct<-lapply(1:ncol(D), function(i) which(D[,i]==sdist[i])) # trees of minimal distance , closest tree for trees 2,3,...
-  # ct[i]=j : tree j is closest to the i-th added tree, tree i+1
   
-  result<- list(smallestDist=sdist
-                , closestTree=ct) # indices are relative to the added trees ranging 2,3,...
+  result<- list(smallestDist=c(NA,sdist)) # starts with NA , because the first tree is not closest to any other previously added tree
   if(!is.na(cutoff)){ 
-    result$selectTrees=1+which(sdist>cutoff) # due to 1+ indices relate to trees ranging 1,2,..
+    result$closestTree=cT # indices relate to trees ranging 1,2,.. as ordered in rg$forest
+    result$selectTrees=sT # indices relate to trees ranging 1,2,.. as ordered in rg$forest
   }
   return(result)
 }
@@ -83,10 +94,10 @@ ctplot<- function(D, cutoff=NA, returnTrees=FALSE){
   # closest tree plot is a reduced version of added tree plot to select a spanning sub-forest
   
   # with returnTrees=TRUE the trees that have a smallest distance to any other 
-  # previously added tree (tree 1 for the first added tree which is tree 2)
+  # previously added tree
   # exceeding the cutoff will be returned.
   
-  # Chipman & friends add these trees to selevt a diverse set of trees, hopefully a spanning sub-forest.
+  # Chipman & friends add these trees to select a diverse set of trees, hopefully a spanning sub-forest.
   
   # D should be a distance matrix , a square matrix , nrow(D), ncol(D) > 1 but larger than that should be expected
   # objects of class dist are not accepted for now
@@ -96,33 +107,40 @@ ctplot<- function(D, cutoff=NA, returnTrees=FALSE){
   
   ctd<-ctdata(D,cutoff)
   sdist<-ctd$smallestDist
-  ct<-ctd$closestTree
+  ct<-ctd$closestTree # length(ct) = length( ctd$selectTrees) -1
   
-  nT<-length(sdist) # number of trees for which to plot
+  nT<-nrow(D) # number of trees , we will plot one less
   #print(nT)
   
   col<-rep(1,nT)
-  if(!is.na(cutoff)){ col[sdist>cutoff]<-2 }
+  if(!is.na(cutoff)){ col[cT[sT]]<-2 }
   
-  xgrid<- 2:(nT+1)
+  xgrid<- 2:nT
   
   plot(x=xgrid
-       , y=sdist
-       , xlim=c(1,nT)+1
+       , y=sdist[xgrid] # 1st entry is na , 1st tree is not closest to anything
+       , xlim=c(2,nT)
        , xlab='added tree'
-       , ylim=c(0,min(max(sdist)+1,max(sdist)*1.05))
+       , ylim=c(0,min(max(sdist, na.rm = TRUE)+1,max(sdist, na.rm = TRUE)*1.05))
        , ylab='smallest distance to previoulsly added trees'
-       , col=col
+       , col=col[xgrid]
        , main='added tree plot: closest tree'
        )
   
   if(!is.na(cutoff)){ abline(h=cutoff, col='grey') }
   
+  labels<-c(rep('',times=nT-1)) # count 2,3,.., nT , 1 for it is closest to the 2nd tree , which comes first
+  labels[ctd$selectTrees[-1]-1]<-ct # -1 in selectTrees since we do not plot the first tree
+                                    # -1 outside of selectTrees because ...
+  # print(labels)
   text(x=xgrid
-       , y=sdist
+       , y=sdist[xgrid]
        , pos=3
-       , labels=ct
+       , labels=labels
        )
+  # Left out trees do not get a label.
+  # I should consider not plotting left out trees.
+  # labels should be lists when more than one tree is closest (will happen often for d0 metric)
   
   if(returnTrees){return(ctd$selectTrees)}
 }

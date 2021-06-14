@@ -9,9 +9,12 @@ output:
     toc_depth: 2
 ---
 
+ note: The working directory is not set correctly.
 
 ```{r}
 rm(list=ls())
+setwd("~/Documents/ds/sem4/thesis/cleveland-01")
+getwd()
 ```
 
 Required libraries.
@@ -23,9 +26,13 @@ library(e1071)
 library(cluster)
 library(dplyr)
 ```
+```{r}
+getwd()
+```
 
 Source code.
 ```{r}
+setwd("~/Documents/ds/sem4/thesis/cleveland-01") # this should not be necessary
 source('code/source/distance-matrices-02.R') # my own code
 source('code/source/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
 source('code/source/chipman.R')
@@ -38,6 +45,7 @@ read / load
 * a random forest of class ranger
 * distance matrices from 4 metrices (d0,d1,d2 of Banerjee, sb: Shannon-Banks metric in Chipman paper)
 ```{r}
+setwd("~/Documents/ds/sem4/thesis/cleveland-01")
 load('code/chipman/04/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
@@ -65,9 +73,11 @@ plots in Chipman:
 * ctp: closest tree plot which shows only the the tree(s) the added tree is closest to.
 
 ```{r}
+dm[['d1']][1:5,1:5]
 mds(dm[['d1']][1:5,1:5])
 atp(dm[['d1']][1:5,1:5])
-ctplot(dm[['d1']][1:5,1:5])
+ctdata(dm[['d1']][1:5,1:5],6100)
+ctplot(dm[['d1']][1:5,1:5],6100)
 ```
 
 This will be our visualisation for the accuracy ratios of the set of selected trees (the subforest of diverse trees) and the further reduced subforest (of cluster medoids. )
