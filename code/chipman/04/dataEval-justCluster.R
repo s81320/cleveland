@@ -12,13 +12,13 @@ library(ranger)
 library(ggplot2)
 
 # source('distance-matrices-02.R') # my own code
-source('subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
-#source('chipman.R')
-source('helper-functions.R')
+source('code/source/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
+#source('code/source/chipman.R')
+source('code/source/helper-functions.R')
 
-# load df (with factors) 
+# load df (Cleveland data with factors) 
 # load docN with N repetitions for 
-## data splits and the ranger random forest build on the current train set
+## 1-3) data splits, 4) the ranger random forest build on the current train set, 5) the accuracies, 6) the distance matrices
 load('doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
@@ -195,6 +195,6 @@ cor(x=doc.tested$perc.pos.sil.width , y=doc.tested$accRatio)
 #doc5clusters<-doc
 
 # only for forests (i in 1:N) 5,6,9 the test accuracy is lower than the validation accuracy
-# so in general the test performance is better than the validation percormance (accuracy)
+# so in general the test performance is better than the validation performance (accuracy)
 # but what we actually celebrate is that the accuracy under clustering is better than 
 # that of the full forest, regardless of the performance of the full forest.

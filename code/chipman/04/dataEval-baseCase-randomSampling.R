@@ -5,10 +5,10 @@ library(dplyr)
 library(ranger)
 library(ggplot2)
 
-# source('distance-matrices-02.R') # my own code
-source('subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
-source('chipman.R')
-source('helper-functions.R')
+# source('code/source/distance-matrices-02.R') # my own code
+source('code/source/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
+source('code/source/chipman.R')
+source('code/source/helper-functions.R')
 
 # load df (with factors) 
 # load docN with N repetitions for 

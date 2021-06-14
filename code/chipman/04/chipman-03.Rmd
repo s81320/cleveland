@@ -12,7 +12,6 @@ output:
 
 ```{r}
 rm(list=ls())
-setwd("~/Documents/ds/sem4/thesis/trees-02-ranger/04-chipman")
 ```
 
 Required libraries.
@@ -27,19 +26,19 @@ library(dplyr)
 
 Source code.
 ```{r}
-source('distance-matrices-02.R') # my own code
-source('subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
-source('chipman.R')
-source('helper-functions.R')
+source('code/source/distance-matrices-02.R') # my own code
+source('code/source/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
+source('code/source/chipman.R')
+source('code/source/helper-functions.R')
 ```
 
 read / load
-* the cleceland data
+* the cleveland data
 * stratified data split: train, val and test
 * a random forest of class ranger
 * distance matrices from 4 metrices (d0,d1,d2 of Banerjee, sb: Shannon-Banks metric in Chipman paper)
 ```{r}
-load('doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+load('code/chipman/04/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
 train<-docN[[1]]$train

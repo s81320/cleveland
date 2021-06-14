@@ -6,7 +6,6 @@
 ## distance matrices for the trees in the forest, based on 4 different metrices
 
 rm(list=ls())
-setwd("~/Documents/ds/sem4/thesis/trees-02-ranger/04-chipman")
 library(ranger)
 library(caret)
 library(e1071)
@@ -14,13 +13,13 @@ library(cluster)
 library(dplyr)
 
 # my own code
-source('distance-matrices-02.R') 
-source('subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
+source('code/source/distance-matrices-02.R') 
+source('code/source/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
 #source('chipman-plots.R')
-source('helper-functions.R')
+source('code/source/helper-functions.R')
 
 # read cleveland data
-df <- read.csv('../cleveland/Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
+df <- read.csv('data//Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
 
 if(all(dim(df)==c(303,11))){ # do nothing
   }else{message(paste('did read an unexpected dimension of',dim(df),'for the cleveland dataset.')) }
@@ -91,5 +90,8 @@ for(i in 1:N){
                   distMatrices=doc)
 }
 
-file=paste('doc-',rg$num.trees,'trees.rda',sep='')
+file=paste('code/chipman/04/doc-',rg$num.trees,'trees-',N,'rep-',rg$call$max.depth,'maxDepthTESTRUN.rda',sep='')
 save(df,docN, file=file)
+message(paste('saved data frame of cleveland data and documentation of generated splits, forests, accuracies, and distance matrices  in ' 
+              , file 
+              , '\nplease remove TESTRUN from the file name ... if this was not just a test run'))
