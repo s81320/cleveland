@@ -13,8 +13,8 @@ library(e1071)
 library(cluster)
 library(dplyr)
 
-source('code/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
-source('code/helper-functions.R')
+source('code/source/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
+source('code/source/helper-functions.R')
 
 # read and transform the data
 
