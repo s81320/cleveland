@@ -16,7 +16,7 @@ library(dplyr)
 # my own code
 source('distance-matrices-02.R') 
 source('subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
-source('chipman-plots.R')
+#source('chipman-plots.R')
 source('helper-functions.R')
 
 # read cleveland data
@@ -25,7 +25,7 @@ df <- read.csv('../cleveland/Cleve.data.csv')[-1] # not elegant, but csv reads a
 if(all(dim(df)==c(303,11))){ # do nothing
   }else{message(paste('did read an unexpected dimension of',dim(df),'for the cleveland dataset.')) }
 
-if(length(is.na(df))>0){message('there seems to be data missing in cleveland dataset.')}
+if(length(which(is.na(df))>0)){message('there seems to be data missing in cleveland dataset.')}
 
 df$Sex<-as.factor(df$Sex)
 df$Chestpaintype<-as.factor(df$Chestpaintype)
