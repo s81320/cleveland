@@ -1,3 +1,5 @@
+library(dplyr)
+
 # based on the Chipman, Geaorge, McCulloch 1998 paper
 
 # mds plot
@@ -120,7 +122,7 @@ ctplot<- function(D, cutoff=NA, returnTrees=FALSE){
   
   ctd<-ctdata(D,cutoff)
   sdist<-ctd$smallestDist # of all trees considered in D
-  ct<-ctd$closestTree  # length(ct) = nT -1
+  cT<-ctd$closestTree  # length(ct) = nT -1
   sT<-ctd$selectTrees
   if(length(sT)>1){
     aT <- sT[-1] # added trees, not including the first tree, now aT,cT have the same length
@@ -131,14 +133,18 @@ ctplot<- function(D, cutoff=NA, returnTrees=FALSE){
   
     xgrid<- 2:nT
     y<- rep(NA,nT) # for all trees , even the 1st tree which we will not need later on
+    # old code to create y
     for(i in seq.int(1,length(aT))){
-      y[aT[[i]]]<- D[aT[[i]], ct[[i]]]
-      }
-  
+      y[aT[[i]]]<- D[aT[[i]], cT[[i]]]
+    }
+    # new code, not yet correct
+    # needs to be streched out over 1:nT 
+    # y2 <- mapply( function(x,y) D[x,y], aT, cT) # will work for aT, cT as lists but not for lists of lists
+    
     #print(xgrid)
     #print(y)
-    print('ylim')
-    print(c(0,min(max(sdist, na.rm = TRUE)+1,max(sdist, na.rm = TRUE)*1.05)))
+    # print('ylim')
+    # print(c(0,min(max(sdist, na.rm = TRUE)+1,max(sdist, na.rm = TRUE)*1.05)))
   
     plot(x=xgrid
          , y=y[xgrid]
@@ -153,9 +159,20 @@ ctplot<- function(D, cutoff=NA, returnTrees=FALSE){
     if(!is.na(cutoff)){ abline(h=cutoff, col='grey') }
   
     labels<-c(rep('',times=nT)) # for all trees 1.. nT
-    for(i in seq.int(1,length(aT))){
-      labels[aT[[i]]]<- ct[[i]]
+    # old code to create labels
+    #for(i in seq.int(1,length(aT))){
+    #  labels[aT[[i]]]<- cT[[i]]
+    #}
+    # new code
+    labels<-rep(NA,nT)
+    for(i in 1:nT){
+      if(i %in% aT){ 
+        labels[i]<-cT[which(aT==i)]
+      }else{
+        labels[i]<-''
+      }
     }
+    
     text(x=xgrid
          , y=y[xgrid]
          , pos=1
