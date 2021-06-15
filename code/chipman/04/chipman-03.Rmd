@@ -73,11 +73,14 @@ plots in Chipman:
 * ctp: closest tree plot which shows only the the tree(s) the added tree is closest to.
 
 ```{r}
-dm[['d1']][1:5,1:5]
-mds(dm[['d1']][1:5,1:5])
-atp(dm[['d1']][1:5,1:5])
-ctdata(dm[['d1']][1:5,1:5],6100)
-ctplot(dm[['d1']][1:5,1:5],6100)
+m<-'d0'
+s<-8
+dm[['d0']][1:s,1:s]
+mds(dm[[m]][1:s,1:s])
+atp(dm[[m]][1:s,1:s], addLabels = T)
+ctdata(dm[[m]][1:s,1:s],3)
+ctplot(dm[[m]][1:s,1:s],0.18)
+dm[[m]][4,1:s] ; dm[[m]][5,1:s]
 ```
 
 This will be our visualisation for the accuracy ratios of the set of selected trees (the subforest of diverse trees) and the further reduced subforest (of cluster medoids. )
@@ -145,7 +148,7 @@ eval.on.test<-function(metric,cutoff,k=NA, doc=doc){
 metric<-'d0'
 par(mfrow = c(2, 1))
 mds(dm[[metric]])
-ctplot(dm[[metric]])
+ctplot(dm[[metric]][1:10,1:10],0.15)
 par(mfrow = c(1, 1))
 ```
 
