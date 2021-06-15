@@ -12,7 +12,7 @@ source('code/source/helper-functions.R')
 # load df (with factors) 
 # load docN with N repetitions for 
 ## data splits and the ranger random forest build on the current train set
-load('doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+load('code/chipman/04/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
 ##############################################
@@ -90,7 +90,7 @@ for(met in metrices){
 par(mfrow=c(1,1))
 
 # result: 
-# mean / median accuracy ratios  are close to 1 , exceeding 1 only once
+# mean / median accuracy ratios are equal to 1 , once even exceeding 1
 # there are outliers with unacceptably low accuracy ratios , the spread of accuracy ratios is quite large
 
 ###################################################
@@ -132,8 +132,9 @@ barplot( height= as.vector(doc$cor2), main='cor acc of full forest\nand sub-fore
 par(mfrow=c(1,1))
 
 # interpretation / results:
-# the diverse sub-forest built from d2 tends to perform better when its size is larger (not desirable)
-# diverse subforests built from metrices d0, d1, sb are indifferent, which is good for our purpose
+# the diverse sub-forest built from dd0, d1 tends to perform better when its size is larger (not desirable)
+# diverse subforests built from metrices d2, sb perform better on smaller sub-forests
+# correlation is only very mild. 
 
 # d1 and sb have a slight tendency to perform better 
 # when the accuracy of the full forest is small to begin with
