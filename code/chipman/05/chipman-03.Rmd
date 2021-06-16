@@ -1,7 +1,7 @@
 ---
 title: "Chipman, George, McCulloch 1998"
 author: 'Silke Meiner'
-date: '05-June-2021'
+date: '16-June-2021'
 output:
   html_document:
     df_print: paged
@@ -13,8 +13,6 @@ output:
 
 ```{r}
 rm(list=ls())
-setwd("~/Documents/ds/sem4/thesis/cleveland-01")
-getwd()
 ```
 
 Required libraries.
@@ -26,9 +24,7 @@ library(e1071)
 library(cluster)
 library(dplyr)
 ```
-```{r}
-getwd()
-```
+
 
 Source code.
 ```{r}
@@ -46,7 +42,7 @@ read / load
 * distance matrices from 4 metrices (d0,d1,d2 of Banerjee, sb: Shannon-Banks metric in Chipman paper)
 ```{r}
 setwd("~/Documents/ds/sem4/thesis/cleveland-01")
-load('code/chipman/04/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+load('code/chipman/05/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
 train<-docN[[1]]$train
@@ -73,8 +69,8 @@ plots in Chipman:
 * ctp: closest tree plot which shows only the the tree(s) the added tree is closest to.
 
 ```{r}
-m<-'d0'
-s<-8
+m<-'sb'
+s<-30
 dm[['d0']][1:s,1:s]
 mds(dm[[m]][1:s,1:s])
 atp(dm[[m]][1:s,1:s], addLabels = T)
@@ -148,14 +144,14 @@ eval.on.test<-function(metric,cutoff,k=NA, doc=doc){
 metric<-'d0'
 par(mfrow = c(2, 1))
 mds(dm[[metric]])
-ctplot(dm[[metric]][1:10,1:10],0.15)
+ctplot(dm[[metric]])
 par(mfrow = c(1, 1))
 ```
 
 
 ```{r}
 metric<-'d0'
-cutoffs<-c(0.05,0.15)
+cutoffs<-c(0.15,0.25,0.35,0.45)
 cluster.k<-c(5,7,11,13)
 set.seed(1871)
 cAR<-chipmanAccRatios(metric, cutoffs, cluster.k, rg$forest, dm[[metric]], df[val,]) # c hipman A ccuracy R atios
@@ -173,15 +169,15 @@ There is no choice for the cutoff. We decide against clustering.
 
 ```{r}
 metric<-'d0'
-cutoff<-0.05
-cluster.k<-13
+cutoff<-0.25
+#k<-5
 at<-eval.on.test(metric, cutoff, doc=dm)
 at ; at / accff.test
-at<-eval.on.test(metric, cutoff, cluster.k=cluster.k, doc=dm)
-at ; at / accff.test
+#at<-eval.on.test(metric, cutoff, k=k, doc=dm)
+#at ; at / accff.test
 ```
 
-This is a good result. Since the result is better than on the validation set, we are in some kind of luck. But, on the other hand, as suggested by the prediction on the validationset: we are close to 1. This is not luck, this was expected.
+This is a good result. And agrees with the performance on the validation set.
 
 ## Hypothesis test (on val data)
 ```{r}
@@ -204,7 +200,7 @@ par(mfrow = c(1, 1))
 ```
 
 ```{r}
-cutoffs<-c(4500, 5000, 5500, 6000, 6500, 7000)
+cutoffs<-c(0.25,0.3,0.35)
 cluster.k<-c(3,5,7,11,13)
 set.seed(1870)
 cAR<-chipmanAccRatios(metric, cutoffs, cluster.k, rg$forest, dm[[metric]], df[val,])
@@ -219,13 +215,13 @@ plot2(cAR)
 We choose cutoff 6500 for its high accuracy ratio on the validation set and its relatively small size for the subforest.
 ```{r}
 metric='d1'
-cutoff=6500
+cutoff=0.3
 
-at<-eval.on.test(metric, cutoff, doc=dm)
+at<-eval.on.test(metric, cutoff, doc=dm) # a_ccuracy t_est set
 at ; at / accff.test
 ```
 
-Good result, too, accuracy ratio above 1.
+Good result, too, accuracy ratio 1.
 
 ## Hypothesis test (on val data)
 ```{r}
@@ -252,7 +248,7 @@ par(mfrow = c(1, 1))
 
 ```{r}
 metric<-'d2'
-cutoffs<-c(40,44,48)
+cutoffs<-c(0.24,0.25,0.26,0.27,0.28)
 cluster.k<-c(5,7,11,13)
 set.seed(1870)
 cAR<-chipmanAccRatios(metric, cutoffs, cluster.k, rg$forest, dm[[metric]], df[val,])
@@ -265,15 +261,15 @@ plot2(cAR)
 
 ## Evaluation on test set
 
-We choose the optimal cutoff of 44 because of its size below 10% of the full forest and its accuracy ratio exceeding 1 (on the validation set).
+We choose the optimal cutoff of 0.28 because of its size. Regarding the performance on the validation set there was no linear trend observable, so we assume it is rather variable.
 ```{r}
 metric='d2'
-cutoff=44
+cutoff=0.28
 
 at<-eval.on.test(metric, cutoff, doc=dm)
 at ; at / accff.test
 ```
-The accuracy ratio on the test set exceeds 0.95 but is below 1.
+The accuracy ratio on the test set  is below 1 and even below 0.95. This is not a good result.
 
 ## Hypothesis test (on val data)
 
@@ -300,7 +296,7 @@ par(mfrow = c(1, 1))
 
 ```{r}
 metric<-'sb'
-cutoffs<-c(18,19,20)
+cutoffs<-c(0.65,0.7,0.75)
 cluster.k<-c(5,7,11,13)
 # cluster.k<-c(5,10,15,20,25)
 set.seed(1870)
@@ -317,7 +313,7 @@ Optimal parameters are a large cutoff and no clustering: The accuracy ratio is a
 
 ```{r}
 metric='sb'
-cutoff=18
+cutoff=0.75
 at<-eval.on.test(metric, cutoff, doc=dm)
 at ; at / accff.test
 ```

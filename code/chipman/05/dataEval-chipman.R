@@ -4,7 +4,7 @@ library(dplyr)
 library(ranger)
 library(ggplot2)
 
-# source('code/source/distance-matrices-02.R') # my own code
+# my own code
 source('code/source/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
 source('code/source/chipman.R')
 source('code/source/helper-functions.R')
@@ -12,7 +12,7 @@ source('code/source/helper-functions.R')
 # load df (with factors) 
 # load docN with N repetitions for 
 ## data splits and the ranger random forest build on the current train set
-load('code/chipman/04/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+load('code/chipman/05/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
 ##############################################
@@ -22,10 +22,10 @@ N <- length(docN)
 metrices <- c('d0','d1','d2','sb')
 
 # cutoffs for forest with rg$num.trees==500
-cutoffs<-list('d0' = c(0.05, 0.15) 
-              , 'd1' = c(5500, 6000, 6500,7000)
-              , 'd2' = c(44,46,48)
-              , 'sb' = c(17,18,19,20))
+cutoffs<-list('d0' = c(0.15, 0.25,0.35,0.45) 
+              , 'd1' = c(0.25,0.3,0.35)
+              , 'd2' = c(0.24,0.25,0.26,0.27,0.28)
+              , 'sb' = c(0.65,0.7,0.75))
 # how to automate this?
 # cutoffs to select fixed numbers of trees? 1%, 3% ,5%, 10%
 # for rg$num.trees==500 this would be 5, 15, 25, 50
@@ -90,7 +90,7 @@ for(met in metrices){
 par(mfrow=c(1,1))
 
 # result: 
-# mean / median accuracy ratios are equal to 1 , once even exceeding 1
+# mean / median accuracy ratios are around 1
 # there are outliers with unacceptably low accuracy ratios , the spread of accuracy ratios is quite large
 
 ###################################################
@@ -114,6 +114,7 @@ for(met in metrices){
 par(mfrow=c(1,1))
 # result: sub-forests are too big
 # We want to reduce to 1% or 5% of the trees of the full forest
+# cutoffs probably need to chosen anew for each forest, thus automaticaly
 
 # so, how are the size of the sub-forest and its accuracy ratios related?
 doc<- data.frame()
@@ -131,7 +132,7 @@ barplot( height= as.vector(doc$cor1), main='cor sub-forest size\nand its acc rat
 barplot( height= as.vector(doc$cor2), main='cor acc of full forest\nand sub-forest\'s ar')
 par(mfrow=c(1,1))
 
-# interpretation / results:
+# interpretation / results from previous runs (need not apply now):
 # the diverse sub-forest built from dd0, d1 tends to perform better when its size is larger (not desirable)
 # diverse subforests built from metrices d2, sb perform better on smaller sub-forests
 # correlation is only very mild. 

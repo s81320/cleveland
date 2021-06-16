@@ -5,21 +5,19 @@
 # here we explore the strategy to cluster and then create a subforest as the set of medoid trees
 
 rm(list=ls())
-setwd("~/Documents/ds/sem4/thesis/trees-02-ranger/04-chipman")
 
 library(dplyr)
 library(ranger)
 library(ggplot2)
 
-# source('distance-matrices-02.R') # my own code
+# my code
 source('code/source/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
-#source('code/source/chipman.R')
 source('code/source/helper-functions.R')
 
 # load df (Cleveland data with factors) 
 # load docN with N repetitions for 
 ## 1-3) data splits, 4) the ranger random forest build on the current train set, 5) the accuracies, 6) the distance matrices
-load('code/chipman/04/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+load('code/chipman/05/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
 ## accuracy of the full forest on the validation sets ##
@@ -85,7 +83,7 @@ doc$metric<-as.factor(doc$metric)
 
 doc.sf.clus <- doc
 
-#file<-'code/chipman/04/subforest-clustering-from-500trees.rda'
+#file<-'code/chipman/05/subforest-clustering-from-500trees.rda'
 #save(doc.sf.clus, file=file)
 #load(file)
 # doc<-doc.sf.clus
@@ -107,7 +105,7 @@ cor(x=doc.sf.clus$perc.pos.sil.with , y=doc.sf.clus$accRatio)
 #######################################################
 
 lm.obj.1<-lm(accRatio~. , data=doc.sf.clus)
-summary(lm.obj.all)
+summary(lm.obj.1)
 # since accRatio = acc.sf.pam / acc.ff we get R-squared almost 1 if we include this information
 # we have a quotient and the linear model can be fit to it with small p-values and large R-squared?
 # interesting... but not expected ... there must be small variation in the denominator?!
@@ -199,3 +197,4 @@ cor(x=doc.tested$perc.pos.sil.width , y=doc.tested$accRatio)
 # so in general the test performance is better than the validation performance (accuracy)
 # but what we actually celebrate is that the accuracy under clustering is better than 
 # that of the full forest, regardless of the performance of the full forest.
+

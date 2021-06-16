@@ -13,7 +13,7 @@ library(cluster)
 library(dplyr)
 
 # my own code
-source('code/source/distance-matrices-02.R') 
+source('code/source/distance-matrices-03-scaled01.R') 
 source('code/source/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
 #source('chipman-plots.R')
 source('code/source/helper-functions.R')
@@ -38,8 +38,8 @@ df$CAD<-as.factor(df$CAD)
 # document accuracy of full forest predictions on validation and test set
 # create and document distance matrices for 4 metrices
 
-docN<-list()
-doc<-list()
+docN<-list(rep(NA,N))
+doc<-list(rep(NA,4))
 
 N=10
 set.seed(1789) 
@@ -77,7 +77,7 @@ for(i in 1:N){
   
   for(metric in c('d0','d1','d2','sb')){
     #for(metric in c('d0')){
-    print(paste('start ' , metric , ' at ', Sys.time()) )
+    print(paste('loop', i, 'start' , metric , 'at', Sys.time()) )
     dm2<-createDM(forest=rg$forest, type=metric , dft=df[train,])
     doc[[metric]]<-dm2
   }
@@ -90,7 +90,7 @@ for(i in 1:N){
                   distMatrices=doc)
 }
 
-file=paste('code/chipman/04/doc-',rg$num.trees,'trees-',N,'rep-',rg$call$max.depth,'maxDepthTESTRUN.rda',sep='')
+file=paste('code/chipman/05/doc-',rg$num.trees,'trees-',N,'rep-',rg$call$max.depth,'maxDepthTESTRUN.rda',sep='')
 save(df,docN, file=file)
 message(paste('saved data frame of cleveland data and documentation of generated splits, forests, accuracies, and distance matrices  in ' 
               , file 

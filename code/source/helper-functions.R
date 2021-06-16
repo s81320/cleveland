@@ -19,6 +19,56 @@ apsf<- function(forest=rg$forest, idx, newdata){
 }
 
 
+pred.sf <- function(mtrx,levels=rf$classes){
+  # ensemble vote : return the class / name of the family most often returned
+  # mtrx should be a matrix with row: observation to be voted on, column: trees that cast their vote. Matrix elements are the votes
+  # when 2 classes get the maximum votes (tie) the vote goes always to the one first in line
+  mf1<-function(vec) table(factor(vec, levels=levels))
+  mf2<-function(vec) attr(which.max(vec),'names')
+  
+  x<-apply(mtrx,1, mf1) # turn each row into a table, counting how often each class is the classification result , counting votes for each class
+  x<-apply(x,2,mf2) # get the maximum vote
+  x<-factor(x, levels=rf$classes) # relevant when some families are not in the classification results, prevents the table to be reduced to a smaller size than 4x4.
+  
+  return(x)
+}
+
+pred.sf.w <- function(mtrx , wts=NULL , levels=rf$classes){
+  # weighted ensemble vote : count the votes for each class, multiply the number of votes by the corresponding weight, return the class / name of the family with the highest value
+  # mtrx should be a matrix with row: observation to be voted on, column: trees that cast their vote. Matrix elements are the votes
+  # when 2 classes get the maximum votes (tie) the vote goes always to the one first in line
+  
+  if (is.null(wts)) return(pred.sf(mtrx,levels))
+  else{
+    if (length(wts)!=ncol(mtrx)) print('error in number of weights rel. to ncol for matrix mrtx')
+    
+    nC<- length(levels)
+    nT<-ncol(mtrx)
+    #print(paste('classes, trees',nC,nT))
+    
+    dimnames<-list()
+    dimnames[1]<-list(1:nrow(mtrx))
+    dimnames[2]<-list(levels)
+    #dimnames<-list(dimnames)
+    x<-matrix(0,nrow(mtrx),nC, dimnames=dimnames)
+    # this x has a different layout than in predict.sf without weights
+    
+    # this should be done with apply
+    for (r in 1:nrow(mtrx)){
+      for (i in 1:nT){
+        # x+=w
+        x[r,as.character(mtrx[r,i])]<-x[r,as.character(mtrx[r,i])]+wts[i] 
+      }
+    }
+    
+    #print('for loop done')
+    mf2<-function(vec) attr(which.max(vec),'names')
+    x<-apply(x,1,mf2) # get the maximum vote
+    # we apply mf2 row wise, in predict.sf we did it columns wise
+    return(x) 
+  }
+}
+
 checkPartition<-function(train_=train, val_=val, test_=test, df_=df){ 
   
   OK<-FALSE

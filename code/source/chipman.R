@@ -179,7 +179,13 @@ ctplot<- function(D, cutoff=NA, returnTrees=FALSE){
          , labels=labels[xgrid]
         )
     # labels should be lists when more than one tree is closest (will happen often for d0 metric)
-  }else{message('no trees added, nothing to plot')}
+  }else{
+    xgrid<- 2:nT
+    plot(x=xgrid
+         , y=sdist
+         , ylab='smallest distance to previoulsly added trees'
+         , main='added tree plot: closest tree')
+    }
   if(returnTrees){return(ctd$selectTrees)}
 }
 

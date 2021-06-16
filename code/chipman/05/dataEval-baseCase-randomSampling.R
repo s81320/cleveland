@@ -13,7 +13,7 @@ source('code/source/helper-functions.R')
 # load df (with factors) 
 # load docN with N repetitions for 
 ## data splits and the ranger random forest build on the current train set
-load('code/chipman/04/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+load('code/chipman/05/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
 # accuracy of the full forest on the validation set
