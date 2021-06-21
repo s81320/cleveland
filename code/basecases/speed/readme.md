@@ -11,6 +11,6 @@ Of course to speed up prediction time we would do predictions for the individual
 ## first result, sequential execution
 On my laptop reducing the size of the forest from 500 to 60 (500/8=62.5, halving it 3 times) the execution time is reduced to about 40% , 45% , a tweak better than halved. So, roughly: Halving the number of trees 3 times results in halving the execution time (once).
 
-Another calculation can be summarised as: Reducing the number of trees to 10% did more than half the execution time.
+Another calculation can be summarised as: Reducing the number of trees to 10% did a little better than halving the execution time (46%).
 
-(This is ok, since 50 is about equal to 60 and reducing a forest by 10 trees should not make much difference. It is no linear relationship...)
+(This is ok, since 50 is about equal to 60 and reducing a forest by 10 trees should not make much difference in execution time. It is no linear relationship...)
