@@ -12,3 +12,7 @@ For small sizes of a subforest: 3,5,7,11,13 we get accuracy ratios (in per cent,
 Standard deviations of these accuracy ratios go down but are ranging from 0.075 to 0.053, no \% with some outliers.
 
 While a random forest with 50 trees may increase very little in accuracy when adding more trees it does reduce standard deviation. In reverse: When randomly sampling trees from a forest to build a sub-forest we may get accuracy ratios close to one. But we are under a higher risk of unluckily sampling a sub-forest with accuracy quite a bit lower than the full forest / an accuracy ratio quite far from 1.
+
+## future tasks
+
+Calculate the distances of the selected trees as a matrix (dist object?), calculate the diameter of the selection (largest distance) and the mean distance (typical cluster quality measures). Is there a correlation of accuracy and any of these statistics?
