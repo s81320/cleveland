@@ -22,7 +22,7 @@ source('code/source/helper-functions.R')
 df <- read.csv('data//Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
 
 if(all(dim(df)==c(303,11))){ # do nothing
-  }else{message(paste('did read an unexpected dimension of',dim(df),'for the cleveland dataset.')) }
+  }else{message(paste('did read an unexpected dimension of',dim(df),'for the cleveland dataset. Expected (303,11).')) }
 
 if(length(which(is.na(df))>0)){message('there seems to be data missing in cleveland dataset.')}
 
@@ -90,7 +90,7 @@ for(i in 1:N){
                   distMatrices=doc)
 }
 
-file=paste('code/chipman/05/doc-',rg$num.trees,'trees-',N,'rep-',rg$call$max.depth,'maxDepthTESTRUN.rda',sep='')
+file=paste('code/doc-',rg$num.trees,'trees-',N,'rep-',rg$call$max.depth,'maxDepthTESTRUN.rda',sep='')
 save(df,docN, file=file)
 message(paste('saved data frame of cleveland data and documentation of generated splits, forests, accuracies, and distance matrices  in ' 
               , file 
