@@ -43,6 +43,7 @@ cluster.k<-c(3,5,7,11,13)
 # cluster.k<-c(10,30)
 
 for(i in 1:N){
+  if(i==1) print(paste('For each metric clustering into different number of clusters and calculating accuracy ratios on validation set'))
   print(paste(i,'of',N))
   
   doc.i<-data.frame()
@@ -69,8 +70,8 @@ for(i in 1:N){
                     , 'num.cluster'=k
                     , 'avg.sil.width'=pam.obj$silinfo$avg.width
                     , 'perc.pos.sil.with'=as.vector(table(factor(pam.obj$silinfo$clus.avg.widths>0, levels=c(FALSE,TRUE))))[[2]] / k # % of clusters with positive avg width
-                    , 'acc.sf.pam'=acc.sf.pam  %>% round(4)
-                    , 'accRatio'=( acc.sf.pam / accff ) %>% round(4) 
+                    , 'acc.sf.pam'=acc.sf.pam  %>% round(5)
+                    , 'accRatio'=( acc.sf.pam / accff ) %>% round(5) 
         ) 
       doc.m <- rbind(doc.m, new.row)
       }
@@ -90,6 +91,15 @@ doc.sf.clus <- doc
 
 doc.sf.clus %>% 
   group_by(metric,num.cluster) %>% 
+  summarise( m=mean(accRatio) )
+
+doc.sf.clus %>% 
+  group_by(num.cluster) %>% 
+  summarise( m=mean(accRatio) )
+
+# remove distance d1 
+doc.sf.clus[doc.sf.clus$metric!='d1',]  %>% 
+  group_by(num.cluster) %>% 
   summarise( m=mean(accRatio) )
 
 #######################################################
@@ -145,6 +155,7 @@ num.cluster<-13 # optimal clustering parameter
 doc<- data.frame()
 
 for(i in 1:N){
+  if(i==1) print(paste('testing clustering into ' , num.cluster , ' clusters and calculating accuracy ratioson test set'))
   print(paste(i,'of',N))
   
   doc.i <- data.frame()
@@ -180,6 +191,8 @@ for(i in 1:N){
 doc.tested<- doc
 # doc.tested.5clusters <- doc
 rm(new.row, dm.m, doc.m, doc, doc.i , pam.obj)
+
+mean(doc.tested$accRatio)
 
 doc.tested %>% 
   group_by(metric) %>% 
