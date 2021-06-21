@@ -263,6 +263,7 @@ cAR %>%
 
 mean(cAR$accRatio.sf)
 median(cAR$accRatio.sf)
+mean(cAR$size.sf)
 
 ## 2nd step : clustering
 mean(cAR$accRatio.sf.pam.ff) ; median(cAR$accRatio.sf.pam.ff)
