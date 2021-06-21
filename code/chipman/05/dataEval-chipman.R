@@ -228,7 +228,11 @@ metrices <- c('d0','d1','d2','sb')
 #cluster.k<-c(5,10,15,20,25)
 cluster.k<-c(3, 5, 7, 11, 13)
 
-cAR<-data.frame()
+cAR <- data.frame() # start empty, built up while looping, waste time
+# better: allocate space at the beginning
+# cAR<-data.frame(matrix(0,nrow=N*length(metrices),ncol=10))
+# cf R-inferno chapter 2
+
 for(i in 1:N){
   if(i==1) print('creating cAR (chipman accuracy ratios) based on subforests built with the chipman approach\n cutoff based on mean distance')
   print(paste(i,'of',N))
