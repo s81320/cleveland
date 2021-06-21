@@ -11,11 +11,8 @@ Building a subforest from the added tree plot with cutoff set to the mean distan
 metric | mean accuracy ratio | mean size of sub-forest
 --- | --- | ---
 d0 | 99.6 | 12
---- | --- | ---
 d1 | 1 | 39
---- | --- | ---
 d2 | 1.01 | 33
---- | --- | ---
 sb | 98.8 | 17.3
 
 When lowering the cutoff to 0.7 times the mean distance we get larger sub-forests that will then be clustered and can be compared to the base cases. We should expect nothing different from the 2nd base case: applying cutoff first and then clustering should not make clustering easier. Actually, first destroying similarities and then clustering by similarity should leave the algorithm clueless?! How to cluster similar trees together if you first made sure that trees are not similar. Well... anyways:
