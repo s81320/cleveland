@@ -3,28 +3,24 @@ library(dplyr)
 # based on the Chipman, Geaorge, McCulloch 1998 paper
 
 # mds plot
-mds<-function(D){
+mds<-function(D, xylim=FALSE ,main=NULL){
   m <- cmdscale(D, eig = TRUE, k = 2)
   x <- m$points[, 1]
   y <- m$points[, 2]
 
-  plot(x, y, pch = 19, xlim = range(x) , main='mds')
+  if(xylim){
+    xlim<- c(-1,1)
+    ylim<- c(-1,1)
+  }else{
+    xlim<-range(x)
+    ylim<-range(y)
+  }
+  
+  if(is.null(main)){main<-'mds'}
+  
+  plot(x, y, pch = 19, xlim = xlim, ylim=ylim , main=main)
   text(x, y, pos = 4, labels =1:nrow(D))
 }
-
-mds2<-function(D){
-  m <- cmdscale(D, eig = TRUE, k = 2)
-  x <- m$points[, 1]
-  y <- m$points[, 2]
-  
-  k<-nrow(mgcv::uniquecombs(m$points,ordered=FALSE))
-  pam.obj<-cluster::pam(x = m$points, k = k, diss = FALSE)
-  plot(x, y, pch = 19, xlim = range(x) , main='mds', col=pam.obj$clustering)
-  text(x, y, pos = 4, labels =1:nrow(D))
-  
-  return(pam.obj$clustering)
-}
-
 
 # added tree plot
 atp<- function(D, addLabels=FALSE){

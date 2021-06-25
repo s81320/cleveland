@@ -6,14 +6,17 @@
 # https://pubmed.ncbi.nlm.nih.gov/10204200/
 # cited in Chipman, George, McCulloch , 1998, available at
 # http://www-stat.wharton.upenn.edu/~edgeorge/Research_papers/ , formula (5) on page 4
-# has a paremter k that should be optimized: since trees are of different height / depth 
-# I cut off all trees at the same depth k . 
+
+# I curently (25.6.2021) work with a ranger forest with max.depth=5 and the full binary trees all 
+# have the same max depth. Without the max.depth in ranger we'd get trees of different height / depth
+# which makes comparing harder.
 
 # when comparing 2 trees wrt their architecture
 # we have to compare them as full binary trees
 # The ranger forest has a shorter notation that does not allow for direct comparison
-# We compare fully binary coded trees using Hamming distance
 
+# version distance-matrices-02.R used Hamming distance to compare the full binary trees
+# since version 03 we compare split rules at nodes directly (a==b, no weights)
 
 library('e1071') # needed in shannon banks metric
 
@@ -141,15 +144,24 @@ createDMsb <- function(forest){
     return(mf3())
   }
   
-  k<-5 # this should be a variable !! or make it the optimal value by adapting to the highest tree (why should that be optimal??)
+  #k<-5 # this should be a variable !! or make it the optimal value by adapting to the highest tree (why should that be optimal??)
   # at the moment (10.6.2021) I work with a ranger RF with max.depth=5
-  A<-matrix(0,forest$num.trees,2**k-1)
-  for(i in 1:forest$num.trees){
-    A[i,]<-rt2fbt(forest,i)[1:2**k-1]
-  }
-  A[is.na(A)] <- 0 # na will occur if a full binary tree has less than 2**k-1 inner nodes
+  # (25.6.2021) the lowest layer are the terminal nodes which we do not need (no splits)
+  #A<-matrix(0,forest$num.trees,2**k-1)
+  #for(i in 1:forest$num.trees){
+  #  A[i,]<-rt2fbt(forest,i)[1:2**k-1]
+  #}
+  # A[is.na(A)] <- 0 # na will occur if a full binary tree has less than 2**k-1 inner nodes
   
-  return(e1071::hamming.distance(A,A)/(2**k-1)) # distance 
+  A <- lapply(1:forest$num.trees, function(i) rt2fbt(forest,i) )
+  outer(A,A,Vectorize(function(a,b)length(which(a!=b)))) %>% 
+    as.matrix -> 
+    result
+  
+  diag(result)<- 0
+
+  return(result/length(A[[1]]))
+  # return(e1071::hamming.distance(A,A)/(2**k-1)) # distance 
 }
 
 createDM <- function(forest, type, dft=NULL){
