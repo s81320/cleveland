@@ -81,68 +81,70 @@ createDMd2 <- function(forest, dft){
 }
 
 #### Shannon banks metric , tree metric ####
-createDMsb <- function(forest){
-  rt2fbt<-function(rgf=rf$forest, trindx=1){ 
-    # ranger tree to full binary tree
-    # rgf : forest object of a ranger object (a random forest)
-    # trindx : tree index , only 1 index, not a list of indices!
+rt2fbt<-function(rgf=rf$forest, trindx=1){ 
+  # ranger tree to full binary tree
+  # rgf : forest object of a ranger object (a random forest)
+  # trindx : tree index , only 1 index, not a list of indices!
+  
+  t1<-rgf$child.nodeIDs[[trindx]] # a fixed tree
+  ld<-t1[[1]]  # left children / daughters
+  rd<-t1[[2]]  # right
+  
+  mf3<-function(a=0,b=1,k=0) {
+    # root for ranger-tree a=0 , b will refer to a nodeID in ranger forest-object
+    # root for full binary tree b=1 # each node number corresponds to an array position
+    # initial distance to the root k=0
     
-    t1<-rgf$child.nodeIDs[[trindx]] # a fixed tree
-    ld<-t1[[1]]  # left children / daughters
-    rd<-t1[[2]]  # right
-    
-    mf3<-function(a=0,b=1,k=0) {
-      # root for ranger-tree a=0 , b will refer to a nodeID in ranger forest-object
-      # root for full binary tree b=1 # each node number corresponds to an array position
-      # initial distance to the root k=0
+    #### vector z created at last split nodes (no further split nodes, next are leaves) ####
+    if(ld[a+1]==0){
+      if(rd[a+1]==0){
+        z<-c(rep(0,2**k-1)) # for this last split node (no further splitting, next is a leaf) the tree has (at least) 2**k-1 inner nodes. Local knowledge
+        #print(paste(k, ' created z of length ' , length(z)))
+        # z<-c(rep(0,2**(k+1)-1)) # unnecessary to create at the level of leaves / terminal nodes, there are no split variables to document! 
+        # k is distance from the root , b in 2**k:(2**(k+1)-1)
+        #print(paste('create z at node',a,b))
+        return(z)}
+      else{
+        message(paste('error in mf3 at level ',k)) # error if only one child exists
+        return(-1)
+      }
+    }
+    #### at split nodes ####
+    else{ #### recursive function calls for left and right sub-trees ####
+      left.st<-mf3(ld[a+1], 2*b, k+1)
+      right.st<-mf3(rd[a+1], 2*b+1, k+1)
       
-      #### vector z created at last split nodes (no further split nodes, next are leaves) ####
-      if(ld[a+1]==0){
-        if(rd[a+1]==0){
-          z<-c(rep(0,2**k-1)) # for this last split node (no further splitting, next is a leaf) the tree has (at least) 2**k-1 inner nodes. Local knowledge
-          #print(paste(k, ' created z of length ' , length(z)))
-          # z<-c(rep(0,2**(k+1)-1)) # unnecessary to create at the level of leaves / terminal nodes, there are no split variables to document! 
-          # k is distance from the root , b in 2**k:(2**(k+1)-1)
-          #print(paste('create z at node',a,b))
-          return(z)}
+      #print('merging')
+      #print(z1)
+      #print(z2)
+      # adding z1 + z2 when they may be of unequal length
+      l1<-length(left.st)
+      l2<-length(right.st)
+      if(l1!=l2){
+        # append 0 to the shorter one, until of same length
+        if(l1<l2){
+          left.st <-c(left.st,c(rep(0,l2-l1))) }
         else{
-          message(paste('error in mf3 at level ',k)) # error if only one child exists
-          return(-1)
-        }
+          right.st<-c(right.st,c(rep(0,l1-l2))) }
       }
-      #### at split nodes ####
-      else{ #### recursive function calls for left and right sub-trees ####
-        left.st<-mf3(ld[a+1], 2*b, k+1)
-        right.st<-mf3(rd[a+1], 2*b+1, k+1)
-        
-        #print('merging')
-        #print(z1)
-        #print(z2)
-        # adding z1 + z2 when they may be of unequal length
-        l1<-length(left.st)
-        l2<-length(right.st)
-        if(l1!=l2){
-          # append 0 to the shorter one, until of same length
-          if(l1<l2){
-            left.st <-c(left.st,c(rep(0,l2-l1))) }
-          else{
-            right.st<-c(right.st,c(rep(0,l1-l2))) }
-        }
-      }
-      
-      z<-left.st+right.st
-      
-      # split vars start at 0 so we have to +1 , z is initialized with 0 which is not in split.varIDs
-      z[b]<-1+rgf$split.varIDs[[trindx]][a+1]
-      #print(paste(b, z[b], rgf$split.varIDs[[trindx]][a+1]))
-      
-      #print('merged to')
-      #print(z)
-      return(z)
     }
     
-    return(mf3())
+    z<-left.st+right.st
+    
+    # split vars start at 0 so we have to +1 , z is initialized with 0 which is not in split.varIDs
+    z[b]<-1+rgf$split.varIDs[[trindx]][a+1]
+    #print(paste(b, z[b], rgf$split.varIDs[[trindx]][a+1]))
+    
+    #print('merged to')
+    #print(z)
+    return(z)
   }
+  
+  return(mf3())
+}
+
+createDMsb <- function(forest){
+
   
   #k<-5 # this should be a variable !! or make it the optimal value by adapting to the highest tree (why should that be optimal??)
   # at the moment (10.6.2021) I work with a ranger RF with max.depth=5
@@ -153,12 +155,14 @@ createDMsb <- function(forest){
   #}
   # A[is.na(A)] <- 0 # na will occur if a full binary tree has less than 2**k-1 inner nodes
   
-  A <- lapply(1:forest$num.trees, function(i) rt2fbt(forest,i) )
+  lapply(1:forest$num.trees, function(i) rt2fbt(forest,i) ) ->
+    A
+  
   outer(A,A,Vectorize(function(a,b)length(which(a!=b)))) %>% 
     as.matrix -> 
     result
   
-  diag(result)<- 0
+  0 -> diag(result) 
 
   return(result/length(A[[1]]))
   # return(e1071::hamming.distance(A,A)/(2**k-1)) # distance 
