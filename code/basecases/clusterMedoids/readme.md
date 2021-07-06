@@ -21,3 +21,23 @@ Looking into the accuracy ratios for the different metrices we find that d1 ofte
 97.0 | 98.5 | 97.2 | 98.7 | 99.5
 
 This might indicate that building a sub-forest from trees that are far apart from each other positively affects the accuracy ratio.
+
+We look into the performance for the largest number of clusters , k= 13.
+
+On the validation set we have the following mean accuracy ratios
+
+metric | mean acc ratio | sd acc ratio
+---|---| ---
+d0 | 0.997 | 0.04
+d1 | 0.963 | 0.04
+d2 | 0.997 | 0.04
+sb | 0.985 | 0.07
+
+and on the test set
+
+metric | mean acc ratio | sd acc ratio
+---|---| ---
+d0 | 1.08 | 0.1
+d1 | 1.1 | 0.12
+d2 | 1.11 | 0.11
+sb | 1.08 | 0.08

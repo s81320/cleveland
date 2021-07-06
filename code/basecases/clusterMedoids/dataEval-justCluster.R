@@ -86,8 +86,7 @@ doc.sf.clus <- doc
 
 #file<-'code/basecases/clusterMedoids/subforest-clustering-from-500trees.rda'
 #save(doc.sf.clus, file=file)
-#load(file)
-# doc<-doc.sf.clus
+load(file)
 
 doc.sf.clus %>% 
   group_by(metric,num.cluster) %>% 
@@ -155,7 +154,7 @@ num.cluster<-13 # optimal clustering parameter
 doc<- data.frame()
 
 for(i in 1:N){
-  if(i==1) print(paste('testing clustering into ' , num.cluster , ' clusters and calculating accuracy ratioson test set'))
+  if(i==1) print(paste('testing clustering into ' , num.cluster , ' clusters and calculating accuracy ratios on test set'))
   print(paste(i,'of',N))
   
   doc.i <- data.frame()
@@ -196,6 +195,17 @@ mean(doc.tested$accRatio)
 
 doc.tested %>% 
   group_by(metric) %>% 
-  summarise( min=min(accRatio), mean=mean(accRatio), max=max(accRatio))
+  summarise( min=min(accRatio), mean=mean(accRatio), median = median(accRatio), max=max(accRatio), sd= sd(accRatio))
 
+# 1st reaction:
 # this looks like a success for clustering / sub-forest of cluster medoids
+
+# maybe less enthusiastic:
+# the test set seems to be favorable, check out the same table for data from the validation set
+# here the results are okay-ish and not as good.
+
+doc.sf.clus %>%
+  filter(num.cluster==13) %>%
+  group_by(metric) %>% 
+  summarise( min=min(accRatio), mean=mean(accRatio), median = median(accRatio), max=max(accRatio), sd= sd(accRatio))
+
