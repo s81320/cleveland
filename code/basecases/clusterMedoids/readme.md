@@ -24,7 +24,7 @@ This might indicate that building a sub-forest from trees that are far apart fro
 
 We look into the performance for the largest number of clusters , k= 13.
 
-On the validation set we have the following mean accuracy ratios
+On the validation sets we have the following mean accuracy ratios
 
 metric | mean acc ratio | sd acc ratio
 ---|---| ---
@@ -33,7 +33,7 @@ d1 | 0.963 | 0.04
 d2 | 0.997 | 0.04
 sb | 0.985 | 0.07
 
-and on the test set
+and on the test sets
 
 metric | mean acc ratio | sd acc ratio
 ---|---| ---
