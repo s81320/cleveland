@@ -168,6 +168,8 @@ createDMsb <- function(forest){
   # return(e1071::hamming.distance(A,A)/(2**k-1)) # distance 
 }
 
+#####################################################################
+
 createDM <- function(forest, type, dft=NULL){
   # types d1 , d2 require the data.frame of the training set : dft
   if(type=='d0'){ createDMd0(forest) }
