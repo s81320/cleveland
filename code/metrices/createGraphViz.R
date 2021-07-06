@@ -19,6 +19,9 @@ node  <- function(n,l,c) paste("\"",n,"\" [label=\"", l ,"\" color= ", c , "]", 
 
 
 triViz <- function(tri, filename="tree.gv"){
+  # from the ranger treeInfo create code for a vsualization with graphViz
+  # save it to a default file tree.gv at the top / root of the project
+  
   lines1 <- rep("#", nrow(ti))
   lines2 <- rep('#', 3*table(ti$terminal)["TRUE"] )
 
