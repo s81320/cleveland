@@ -26,6 +26,9 @@ d0<-function(a,b){length(base::union(a,b)) - length(base::intersect(a,b))}
 nVar<-length(rg$forest$independent.variable.names)
 
 # highly important in the full random forest are variables : 0, 7 , 9
+# all three variables are used as split variables in the trees 1,2,3 of the ranger random forest rg
+
+# luc : list of unique covariates
 luc<-mapply(function(a,b) unique(a[which(b[[1]]!=0)]) # get split vars for inner nodes
             , sf$split.varIDs
             , sf$child.nodeIDs
@@ -35,7 +38,13 @@ luc<-mapply(function(a,b) unique(a[which(b[[1]]!=0)]) # get split vars for inner
 outer(luc,luc,Vectorize(d0))/nVar
 
 D<-createDMd0(sf)
-mds(D,xylim=T, mds='mds d0')
+#view plot
+mds(D,xylim=T, main='mds d0')
+
+# save plot to file
+#png("code/metrices/mds_d0.png", width = 350, height = 350)
+#mds(D,xylim=T, main='mds d0')
+#dev.off()
 
 ################### d1 ###################
 
@@ -52,6 +61,13 @@ D<- createDMd1(sf, dft=df[c(1,2,3),]) # rank 2 , forming a line, not a plane
 D
 mds(D,TRUE, main='mds d1')
 
+# save plot to file
+#png("code/metrices/mds_d1.png", width = 350, height = 350)
+#mds(D,xylim=T, main='mds d1')
+#dev.off()
+
+# for the d1 metric trees 1 and 2 are very / totally similar, there is no dissimilarity.
+
 ################### d2 ###################
 
 predict(sf, # predict works with a ranger object or a ranger.forest object
@@ -63,6 +79,13 @@ predict(sf, # predict works with a ranger object or a ranger.forest object
 D<- createDMd2(sf, dft=df[c(1,2,3),]) # rank 2 , forming a line, not a plane
 D
 mds(D,TRUE, main='mds d2')
+
+# save plot to file
+#png("code/metrices/mds_d2.png", width = 350, height = 350)
+#mds(D,xylim=T, main='mds d2')
+#dev.off()
+
+# for the d2 metric trees 1 and 3 are very / totally similar, there is no dissimilarity.
 
 ################### sb ###################
 
@@ -78,3 +101,8 @@ result
 D<- createDMsb(sf) 
 D
 mds(D,TRUE, main='mds sb')
+
+# save plot to file
+#png("code/metrices/mds_sb.png", width = 350, height = 350)
+#mds(D,xylim=T, main='mds sb')
+#dev.off()
