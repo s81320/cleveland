@@ -11,14 +11,10 @@ source('code/source/distance-matrices-03-scaled01.R')
 
 load('code/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 
-rg <- docN[[1]]$ranger
-ti<-treeInfo(rg,1)
-
 arrow <- function(a,b) paste("\"",a,"\"->\"",b,"\"",sep='')
 node  <- function(n,l,c) paste("\"",n,"\" [label=\"", l ,"\" color= ", c , "]", sep='')
 
-
-triViz <- function(tri, filename="tree.gv"){
+triViz <- function(tri, filename="code/metrices/tree.gv"){
   # from the ranger treeInfo create code for a vsualization with graphViz
   # save it to a default file tree.gv at the top / root of the project
   
@@ -39,6 +35,15 @@ triViz <- function(tri, filename="tree.gv"){
   }
 
   fileConn<-file(filename)
-  writeLines(c("digraph fbt {", "forcelabels=true ;" ,lines2, lines1,"}"), con=fileConn)
+  writeLines(c("# got to https://dreampuf.github.io/GraphvizOnline to create svg", "digraph tree {", "forcelabels=true ;" ,lines2, lines1,"}"), con=fileConn)
   close(fileConn)
+}
+
+rg <- docN[[1]]$ranger
+
+# for the first 3 trees in the ranger forest create the tree visualisation
+trees <- c(1,2,3)
+for (t in trees){
+  ti<-treeInfo(rg,t)
+  triViz(ti,paste("code/metrices/tree",t,".gv", sep=''))
 }
