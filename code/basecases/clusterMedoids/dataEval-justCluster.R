@@ -86,7 +86,7 @@ doc.sf.clus <- doc
 
 #file<-'code/basecases/clusterMedoids/subforest-clustering-from-500trees.rda'
 #save(doc.sf.clus, file=file)
-load(file)
+#load(file)
 
 doc.sf.clus %>% 
   group_by(metric,num.cluster) %>% 
@@ -119,7 +119,8 @@ summary(lm.obj.1)
 # we have a quotient and the linear model can be fit to it with small p-values and large R-squared?
 # interesting... but not expected ... there must be small variation in the denominator?!
 
-# we remove the intercept
+# we include only variables that we control: the metric and the number of clusters 
+# no intercept
 lm.obj.2<- lm(accRatio~0+metric+num.cluster , data=doc.sf.clus)
 summary(lm.obj.2)
 # each metric has its own estimated (highly) significant accRatio (small p-values)
