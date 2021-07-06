@@ -69,7 +69,7 @@ for(i in 1:N){
                     , 'metric'=metric # character
                     , 'num.cluster'=k
                     , 'avg.sil.width'=pam.obj$silinfo$avg.width
-                    , 'perc.pos.sil.with'=as.vector(table(factor(pam.obj$silinfo$clus.avg.widths>0, levels=c(FALSE,TRUE))))[[2]] / k # % of clusters with positive avg width
+                    , 'perc.pos.sil.width'=as.vector(table(factor(pam.obj$silinfo$clus.avg.widths>0, levels=c(FALSE,TRUE))))[[2]] / k # % of clusters with positive avg width
                     , 'acc.sf.pam'=acc.sf.pam  %>% round(5)
                     , 'accRatio'=( acc.sf.pam / accff ) %>% round(5) 
         ) 
@@ -106,7 +106,7 @@ doc.sf.clus[doc.sf.clus$metric!='d1',]  %>%
 #######################################################
 
 cor(x=doc.sf.clus$avg.sil.width , y=doc.sf.clus$accRatio)
-cor(x=doc.sf.clus$perc.pos.sil.with , y=doc.sf.clus$accRatio)
+cor(x=doc.sf.clus$perc.pos.sil.width , y=doc.sf.clus$accRatio)
 
 # result / interpretation:
 # in general: indicators of good clustering quality 
@@ -133,9 +133,19 @@ summary(lm.obj.3)
 anova(lm.obj.2 , lm.obj.3, test="Chisq")
 # ... they are not. We stick with the simpler model of metric and num.cluster, without interactions
 
+# including silouhette related features as predictors
+lm.obj.4<- lm(accRatio~0+metric+num.cluster+avg.sil.width+perc.pos.sil.with, data=doc.sf.clus)
+summary(lm.obj.4)
+# the p value for number of clusters increases when adding avg.sil.width (and per.pos.sil.width)
+# silhouette related features (and num.clusters) have no significant influence (large p-values)
+# coefficients for silhouette related features have positive coefficients, as expected.
+
+cor(doc.sf.clus$perc.pos.sil.width , doc.sf.clus$avg.sil.width)
+cor(doc.sf.clus$num.cluster , doc.sf.clus$avg.sil.width)
 #######################################################################################################
 #### Get expected accuracy ratios for the different combinations of metric and numbers of clusters ####
 #######################################################################################################
+#### we only work with the linear model 2 lm.obj.2
 
 newdata<-data.frame(matrix(0, nrow=20, ncol=6))
 names(newdata)<-names(doc.sf.clus)[-ncol(doc.sf.clus)]
