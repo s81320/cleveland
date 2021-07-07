@@ -75,24 +75,26 @@ dim(cAR)
 cAR %>% 
   group_by(metric) %>% 
   summarise(mean=mean(accRatio.sf), std= sd(accRatio.sf) , size=mean(size.sf))
+# this is promising!
 
-mean(cAR$accRatio.sf)
-median(cAR$accRatio.sf)
-mean(cAR$size.sf)
+# not grouped by metric
+mean(cAR$accRatio.sf) ; median(cAR$accRatio.sf) ;  sd(cAR$accRatio.sf) ; mean(cAR$size.sf)
 
 ## 2nd step : clustering
-mean(cAR$accRatio.sf.pam.ff) ; median(cAR$accRatio.sf.pam.ff)
 
 cAR %>% 
   group_by(size.sf.pam) %>% 
   summarise(m=mean(accRatio.sf.pam.ff), std=sd(accRatio.sf.pam.ff))
+# this is very similar to random sampling and simple clustering
+# can't say it is better than the basecase
 
+# not grouped by metric or num.clusters
+mean(cAR$accRatio.sf.pam.ff) ; median(cAR$accRatio.sf.pam.ff) ;  sd(cAR$accRatio.sf) ; mean(cAR$size.sf.pam)
 #############################################################
 #### accuracy ratios for the sub-forest of diverse trees ####
 #############################################################
 
-# this is promising
-## using the subforest of diverse trees , no clustering
+## using the sub-forest of diverse trees , no clustering
 mean(cAR$accRatio.sf)
 median(cAR$accRatio.sf)
 # if we can identify obvious low-performers , we are good
@@ -106,8 +108,6 @@ cAR %>%
 cAR %>% 
   group_by(size.sf.pam) %>% 
   summarise((m=mean(accRatio.sf.pam.ff)))
-# this is very similar to random sampling and simple clustering
-# can't say it is better than the basecase
 
 ###########################################################################
 #### accuracy ratios for the subforests of diverse trees by sub-forest ####
