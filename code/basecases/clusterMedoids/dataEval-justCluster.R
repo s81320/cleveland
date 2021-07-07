@@ -42,6 +42,8 @@ metrices <- c('d0','d1','d2','sb')
 cluster.k<-c(3,5,7,11,13)
 # cluster.k<-c(10,30)
 
+# this loop takes a while
+# consider loading the saved object with the lines of code below the loop
 for(i in 1:N){
   if(i==1) print(paste('For each metric clustering into different number of clusters and calculating accuracy ratios on validation set'))
   print(paste(i,'of',N))
@@ -113,10 +115,13 @@ cor(x=doc.sf.clus$perc.pos.sil.width , y=doc.sf.clus$accRatio)
 # do not correlate with high accuracy ratios
 #######################################################
 
-lm.obj.1<-lm(accRatio~. , data=doc.sf.clus)
+# first model for all features or all but the accuracy of the pam-clustered sub-forest
+lm.obj.1<-lm(accRatio~0+. , data=doc.sf.clus)
+# lm.obj.1<-lm(accRatio~0+. , data=doc.sf.clus[,c(1:5,7)]) # remove acc.sf.pam, 
+# then the accuracy of the full forest is significant
 summary(lm.obj.1)
 # since accRatio = acc.sf.pam / acc.ff we get R-squared almost 1 if we include this information
-# we have a quotient and the linear model can be fit to it with small p-values and large R-squared?
+# we have a quotient (something non-linear) and the linear model can be fit to it with small p-values and large R-squared?
 # interesting... but not expected ... there must be small variation in the denominator?!
 
 # we include only variables that we control: the metric and the number of clusters 
