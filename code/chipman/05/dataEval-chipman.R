@@ -19,61 +19,73 @@ N <- length(docN)
 #### chipman sub-forests' accuracy ratios ####
 ##############################################
 
+# set the cutoff to the mean distance (or 0.9*mean distance or maybe a factor larger than 1) 
+# to remove trees that are really close to some other tree
+# then cluster and select the medoid into a sub-forest
+
 metrices <- c('d0','d1','d2','sb')
-
-
-##### THIS WILL GO ######
-#########################
-##### cutoffs will be set as mean distance of trees , maybe a factor of it ####
-###############################################################################
-#### SEE BOTTOM OF FILE #####
-#############################
-
-
-# cutoffs for forest with rg$num.trees==500
-cutoffs<-list('d0' = c(0.15, 0.25,0.35,0.45) 
-              , 'd1' = c(0.25,0.3,0.35)
-              , 'd2' = c(0.24,0.25,0.26,0.27,0.28)
-              , 'sb' = c(0.65,0.7,0.75))
-# how to automate this?
-# cutoffs to select fixed numbers of trees? 1%, 3% ,5%, 10%
-# for rg$num.trees==500 this would be 5, 15, 25, 50
 
 #cluster.k<-c(5,10,15,20,25)
 cluster.k<-c(3, 5, 7, 11, 13)
 
+cAR <- data.frame() # start empty, built up while looping, waste time
+# better: allocate space at the beginning
+# cAR<-data.frame(matrix(0,nrow=N*length(metrices),ncol=10))
+# cf R-inferno chapter 2
 
-cAR<-data.frame()
 for(i in 1:N){
-  if(i==1) print('creating cAR (chipman accuracy ratios) based on subforests built with the chipman approach')
+  if(i==1) print('creating cAR (chipman accuracy ratios) based on subforests built with the chipman approach\n cutoff based on mean distance')
   print(paste(i,'of',N))
   rg <- docN[[i]]$ranger
   val<- docN[[i]]$val
-
+  accff<-docN[[i]]$accuracy[[1]]
+  
   for(metric in metrices){
     dm <- docN[[i]]$distMatrices[[metric]]
-   
-    accff<-docN[[i]]$accuracy[[1]]
-
-    ca<-chipmanAccRatios(metric=metric
-                           , cutoffs=cutoffs[[metric]]
+    
+    # factor 1 creates small sizes of sub-forests (before clustering)
+    cutoffs <- c(0.9, 0.95, 1, 1.05)*mean(dm[upper.tri(dm)]) # specific for the mean distances for each metric and each data split (each forest built on its training data)
+    
+    for(cutoff in cutoffs){
+      ca<-chipmanAccRatios(metric=metric
+                           , cutoffs=cutoff
                            , cluster.k=cluster.k
                            , forest=rg$forest
                            , dm2=dm
                            , dfv=df[val,])
-    
-    cAR<-rbind(cAR
-               , cbind(metric=factor(metric, levels = metrices)
-                       ,ca))
-   }
+      
+      # alternative: only add / rbind if ca$size.sf<51
+      cAR<-rbind(cAR
+                 , cbind(metric=factor(metric, levels = metrices)
+                         ,ca))
+    }
+  }
 }
 
-##### END OF WHAT WILL GO ####
-##############################
+# remove observations with a sub-forest size larger than 10% of the full forest (50, 500)
+table(cAR$size.sf>50)
+cAR <- cAR[cAR$size.sf<51,]
+dim(cAR)
 
 ######################################################
 #### cAR is created #### now come interpretations ####
 ######################################################
+
+## 1st step : not choosing trees that are close to a previously added tree (atp)
+cAR %>% 
+  group_by(metric) %>% 
+  summarise(mean=mean(accRatio.sf), std= sd(accRatio.sf) , size=mean(size.sf))
+
+mean(cAR$accRatio.sf)
+median(cAR$accRatio.sf)
+mean(cAR$size.sf)
+
+## 2nd step : clustering
+mean(cAR$accRatio.sf.pam.ff) ; median(cAR$accRatio.sf.pam.ff)
+
+cAR %>% 
+  group_by(size.sf.pam) %>% 
+  summarise(m=mean(accRatio.sf.pam.ff), std=sd(accRatio.sf.pam.ff))
 
 #############################################################
 #### accuracy ratios for the sub-forest of diverse trees ####
@@ -94,6 +106,8 @@ cAR %>%
 cAR %>% 
   group_by(size.sf.pam) %>% 
   summarise((m=mean(accRatio.sf.pam.ff)))
+# this is very similar to random sampling and simple clustering
+# can't say it is better than the basecase
 
 ###########################################################################
 #### accuracy ratios for the subforests of diverse trees by sub-forest ####
@@ -133,9 +147,6 @@ for(met in metrices){
   hist(cARm$size.sf, breaks=4 , main='size of sf' , xlab='')
 }
 par(mfrow=c(1,1))
-# result: sub-forests are too big
-# We want to reduce to 1% or 5% of the trees of the full forest
-# cutoffs probably need to chosen anew for each forest, thus automaticaly
 
 # so, how are the size of the sub-forest and its accuracy ratios related?
 doc<- data.frame()
@@ -152,19 +163,6 @@ par(mfrow=c(1,2))
 barplot( height= as.vector(doc$cor1), main='cor sub-forest size\nand its acc ratio')
 barplot( height= as.vector(doc$cor2), main='cor acc of full forest\nand sub-forest\'s ar')
 par(mfrow=c(1,1))
-
-# interpretation / results from previous runs (need not apply now):
-# the diverse sub-forest built from dd0, d1 tends to perform better when its size is larger (not desirable)
-# diverse subforests built from metrices d2, sb perform better on smaller sub-forests
-# correlation is only very mild. 
-
-# d1 and sb have a slight tendency to perform better 
-# when the accuracy of the full forest is small to begin with
-# and to perform worse when the full forest performs well
-## this is not desirable
-
-# sub-forests built with d0 and d2 perform quite independently 
-# from the accuracy of the full forest
 
 # reducing the size of the sub-forest can be done by clustering , as proposed by chipman
 ###############################
@@ -214,65 +212,3 @@ for(met in metrices){
   abline(a=1,b=0, col='grey')
 }
 par(mfrow=c(1,1))
-
-################################################################################
-#### reduce the size of the sub-forest of diverse trees by lowering cutoffs ####
-################################################################################
-
-# set the cutoff to the mean distance (or 0.5*mean distance or maybe a factor larger than 1) 
-# to remove trees that are really close to some other tree
-# then cluster and select the medoid , or just cluster randomly (that not chipman!)
-
-metrices <- c('d0','d1','d2','sb')
-
-#cluster.k<-c(5,10,15,20,25)
-cluster.k<-c(3, 5, 7, 11, 13)
-
-cAR <- data.frame() # start empty, built up while looping, waste time
-# better: allocate space at the beginning
-# cAR<-data.frame(matrix(0,nrow=N*length(metrices),ncol=10))
-# cf R-inferno chapter 2
-
-for(i in 1:N){
-  if(i==1) print('creating cAR (chipman accuracy ratios) based on subforests built with the chipman approach\n cutoff based on mean distance')
-  print(paste(i,'of',N))
-  rg <- docN[[i]]$ranger
-  val<- docN[[i]]$val
-  
-  for(metric in metrices){
-    dm <- docN[[i]]$distMatrices[[metric]]
-    
-    # factor 1 creates small sizes of sub-forests (before clustering)
-    cutoffs <- 0.7*mean(dm[upper.tri(dm)]) # specific for the mean distances for each metric and each data split (each forest built on its training data)
-    
-    accff<-docN[[i]]$accuracy[[1]]
-    
-    ca<-chipmanAccRatios(metric=metric
-                         , cutoffs=cutoffs
-                         , cluster.k=cluster.k
-                         , forest=rg$forest
-                         , dm2=dm
-                         , dfv=df[val,])
-    
-    cAR<-rbind(cAR
-               , cbind(metric=factor(metric, levels = metrices)
-                       ,ca))
-  }
-}
-
-## 1st step : not choosing trees that are close to a previously added tree (atp)
-cAR %>% 
-  group_by(metric) %>% 
-  summarise(m=mean(accRatio.sf), std= sd(accRatio.sf) , s=mean(size.sf))
-
-mean(cAR$accRatio.sf)
-median(cAR$accRatio.sf)
-mean(cAR$size.sf)
-
-## 2nd step : clustering
-mean(cAR$accRatio.sf.pam.ff) ; median(cAR$accRatio.sf.pam.ff)
-
-cAR %>% 
-  group_by(size.sf.pam) %>% 
-  summarise(m=mean(accRatio.sf.pam.ff), std=sd(accRatio.sf.pam.ff))
-
