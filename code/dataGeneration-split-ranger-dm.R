@@ -38,10 +38,11 @@ df$CAD<-as.factor(df$CAD)
 # document accuracy of full forest predictions on validation and test set
 # create and document distance matrices for 4 metrices
 
+N<-10
 docN<-list(rep(NA,N))
 doc<-list(rep(NA,4))
 
-N=10
+
 set.seed(1789) 
 trainN <- createDataPartition(df$CAD
                             , list=TRUE
@@ -70,6 +71,7 @@ for(i in 1:N){
                #, mtry = 3
                , max.depth=5
                , min.node.size=5
+               , keep.inbag = T
   )
   
   accVal<-apsf(rg$forest, 1:rg$num.trees , df[val,])
@@ -82,15 +84,16 @@ for(i in 1:N){
     doc[[metric]]<-dm2
   }
   
-  docN[[i]]<-list(train=train,
-                  val=val,
-                  test=test,
-                  ranger=rg,
-                  accuracy=c('val'=accVal,'test'=accTest),
-                  distMatrices=doc)
+  docN[[i]]<-list(train=train
+                  , val=val
+                  , test=test
+                  , ranger=rg
+                  , accuracy=c('val'=accVal,'test'=accTest)
+                  , distMatrices=doc
+                  )
 }
 
-file=paste('code/doc-',rg$num.trees,'trees-',N,'rep-',rg$call$max.depth,'maxDepthTESTRUN.rda',sep='')
+file=paste('code/doc-',rg$num.trees,'trees-',N,'rep-',rg$call$max.depth,'maxDepth-keepInbagTESTRUN.rda',sep='')
 save(df,docN, file=file)
 message(paste('saved data frame of cleveland data and documentation of generated splits, forests, accuracies, and distance matrices  in ' 
               , file 
