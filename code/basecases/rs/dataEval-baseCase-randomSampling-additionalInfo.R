@@ -98,39 +98,32 @@ for(i in 1:N){
                   , paste(trindcs[order(trindcs)],collapse=',') # add this to check if something is strange
                   , ( apsf(forest
                               , trindcs
-                              , df[val,] ) / accff ) %>% round(4) # accuracy ratio on validation set
-                  , mean(acc.oob[i,trindcs]) # accuracy on oob training data
-                  #, mean(apply(preds$predictions[,trindcs] , 2, function(vec) acc(vec, as.numeric(df[val,'CAD']))))  %>% round(4) # mean accuracy of sampled trees
-                  , sum(dm[trindcs,trindcs])/(k*(k-1))  %>% round(4) # mean distance of sampled trees , not using mean
+                              , df[val,] ) / accff ) %>% round(3) # accuracy ratio on validation set
+                  , mean(acc.oob[i,trindcs]) %>% round(3) # accuracy on oob training data
+                  , (sum(dm[trindcs,trindcs])/(k*(k-1)))  %>% round(3) # mean distance of sampled trees , not using mean
                   )
       ct<-ct+1
     }    
   }
 }
-names(rs)<-c('forest','num.trees','sampled trees','accRatio','mean tree acc','mean tree dissimilarity')
+names(rs)<-c('forest','num.trees','sampled trees','accRatio','mean tree oob acc','mean tree dissimilarity')
 # if we didn't have the string for the sampled trees, all variables would be numeric 
 # and the following would be unneccessary
 rs$forest<-as.numeric(rs$forest)
 rs$num.trees<-as.numeric(rs$num.trees)
 rs$accRatio<-as.numeric(rs$accRatio)
-rs[,'mean tree acc'] <- as.numeric(rs[,'mean tree acc']) 
+rs[,'mean tree oob acc'] <- as.numeric(rs[,'mean tree oob acc']) 
 rs[,"mean tree dissimilarity"] <- as.numeric(rs[,"mean tree dissimilarity"])
 
-lm1<-lm(accRatio~0+. , data=rs[,c(2,4,6)])
+
+lm1<-lm(accRatio~0+. , data=rs[,c(2,4:6)])
 summary(lm1)
+# this is good!!
 
-# this is good:
-# the mean distance of trees (in the sample)
-# significantly (and positively) contributes to the accuracy ratio
-# as seen before, in the simple random sampling base case, the number of sampled trees also significantly (and positively) contributes to a high accuracy ratio
-# this leads us to the base case of building a sub-forest from the cluster medoids
-
-lm2<-lm(accRatio~0+. , data=rs[,c(2,4:6)])
+# does this tell us that the mean tree acc is most important?
+lm2<-lm(rs$accRatio~0+rs[,'mean tree oob acc'])
 summary(lm2)
-
-# this is good, too:
-# we use single tree accuracy on oob training data (it did not go into building the tree) 
-# and find it pos correlated to the accuracy ratio (a scaled ensemble accuracy) on validation data.
+# I should do an ANOVA thing to compare nested models...
 
 ####################################################
 #### remains from developing the myAcc function ####
