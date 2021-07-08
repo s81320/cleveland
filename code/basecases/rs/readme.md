@@ -13,6 +13,10 @@ Standard deviations of these accuracy ratios go down but are ranging from 0.075 
 
 While a random forest with 50 trees may increase very little in accuracy when adding more trees it does reduce standard deviation. In reverse: When randomly sampling trees from a forest to build a sub-forest we may get accuracy ratios close to one. But we are under a higher risk of unluckily sampling a sub-forest with accuracy quite a bit lower than the full forest / an accuracy ratio quite far from 1.
 
-## future tasks
+## with additional info
 
-Calculate the distances of the selected trees as a matrix (dist object?), calculate the diameter of the selection (largest distance) and the mean distance (typical cluster quality measures). Is there a correlation of accuracy and any of these statistics?
+We randomly sample trees into a sub-forest and document their 
+* mean distance (currently only in the d0 metric / dissimilarity measure) and
+* their mean oob accuracy (the mean of each trees individual oob accuracy, based on training data that did not go into building the tree).
+
+We apply a linear model and find that both , the mean distance and the mean oob accuracy significantly (and positively) affect the acuracy ratio on the validation set.
