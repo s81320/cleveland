@@ -17,7 +17,7 @@ source('code/source/helper-functions.R')
 # load df (Cleveland data with factors) 
 # load docN with N repetitions for 
 ## 1-3) data splits, 4) the ranger random forest build on the current train set, 5) the accuracies, 6) the distance matrices
-load('code/doc-500trees-10rep-5maxDepth-keepInbag.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+load('data/doc-500trees-10rep-5maxDepth-keepInbag.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
 ## accuracy of the full forest on the validation sets ##
@@ -86,8 +86,8 @@ doc$metric<-as.factor(doc$metric)
 
 doc.sf.clus <- doc
 
-#file<-'code/basecases/clusterMedoids/subforest-clustering-from-500trees.rda'
-#save(doc.sf.clus, file=file)
+file<-'data/basecase-clust-500trees.rda'
+save(doc.sf.clus, file=file)
 #load(file)
 
 doc.sf.clus %>% 
@@ -240,4 +240,3 @@ doc.sf.clus %>%
   filter(num.cluster==13) %>%
   group_by(metric) %>% 
   summarise( min=min(accRatio), mean=mean(accRatio), median = median(accRatio), max=max(accRatio), sd= sd(accRatio))
-
