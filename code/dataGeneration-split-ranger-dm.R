@@ -15,13 +15,13 @@ library(dplyr)
 # my own code
 source('code/source/distance-matrices-03-scaled01.R') 
 source('code/source/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
-#source('chipman-plots.R')
 source('code/source/helper-functions.R')
 
 # read cleveland data
 df <- read.csv('data//Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
 
-if(all(dim(df)==c(303,11))){ # do nothing
+if(all(dim(df)==c(303,11))){ 
+  print('checked dimensions of loaded cleveland dataset: (303,11) : OK')
   }else{message(paste('did read an unexpected dimension of',dim(df),'for the cleveland dataset. Expected (303,11).')) }
 
 if(length(which(is.na(df))>0)){message('there seems to be data missing in cleveland dataset.')}
@@ -41,7 +41,6 @@ df$CAD<-as.factor(df$CAD)
 N<-10
 docN<-list(rep(NA,N))
 doc<-list(rep(NA,4))
-
 
 set.seed(1789) 
 trainN <- createDataPartition(df$CAD
@@ -71,7 +70,6 @@ for(i in 1:N){
                #, mtry = 3
                , max.depth=5
                , min.node.size=5
-               , keep.inbag = T
   )
   
   accVal<-apsf(rg$forest, 1:rg$num.trees , df[val,])
@@ -93,8 +91,14 @@ for(i in 1:N){
                   )
 }
 
-file=paste('code/doc-',rg$num.trees,'trees-',N,'rep-',rg$call$max.depth,'maxDepth-keepInbagTESTRUN.rda',sep='')
-save(df,docN, file=file)
+# different approach , rather sequential. not looping so much:
+# 1) create N data splits
+# 2) grow a ranger random forest on each train set
+# 3) calculate distance matrices on each forest
+
+
+file=paste('code/doc-',rg$num.trees,'trees-',N,'rep-',rg$call$max.depth,'maxDepthTESTRUN.rda',sep='')
+save(df,docN , file=file)
 message(paste('saved data frame of cleveland data and documentation of generated splits, forests, accuracies, and distance matrices  in ' 
               , file 
               , '\nplease remove TESTRUN from the file name ... if this was not just a test run'))

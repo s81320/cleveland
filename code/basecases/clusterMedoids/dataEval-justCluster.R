@@ -17,7 +17,7 @@ source('code/source/helper-functions.R')
 # load df (Cleveland data with factors) 
 # load docN with N repetitions for 
 ## 1-3) data splits, 4) the ranger random forest build on the current train set, 5) the accuracies, 6) the distance matrices
-load('code/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+load('code/doc-500trees-10rep-5maxDepth-keepInbag.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
 ## accuracy of the full forest on the validation sets ##
@@ -126,20 +126,36 @@ summary(lm.obj.1)
 
 # we include only variables that we control: the metric and the number of clusters 
 # no intercept
-lm.obj.2<- lm(accRatio~0+metric+num.cluster , data=doc.sf.clus)
+lm.obj.2<- lm(accRatio~0
+              +metric
+              +num.cluster
+              , data=doc.sf.clus
+              )
 summary(lm.obj.2)
 # each metric has its own estimated (highly) significant accRatio (small p-values)
 # and number of clusters is also (very) significant, tending towards larger clusters
 # R squared almost 1 , all variance explained
 
 # check if interactions of metric and number of clusters are significant ...
-lm.obj.3<- lm(accRatio~0+metric+num.cluster+metric*num.cluster , data=doc.sf.clus)
+lm.obj.3<- lm(accRatio~0
+              +metric
+              +num.cluster
+              +metric*num.cluster
+              , data=doc.sf.clus
+              )
 summary(lm.obj.3)
+
 anova(lm.obj.2 , lm.obj.3, test="Chisq")
 # ... they are not. We stick with the simpler model of metric and num.cluster, without interactions
 
 # including silouhette related features as predictors
-lm.obj.4<- lm(accRatio~0+metric+num.cluster+avg.sil.width+perc.pos.sil.with, data=doc.sf.clus)
+lm.obj.4<- lm(accRatio~0
+              +metric
+              +num.cluster
+              +avg.sil.width
+              +perc.pos.sil.width
+              , data=doc.sf.clus
+              )
 summary(lm.obj.4)
 # the p value for number of clusters increases when adding avg.sil.width (and per.pos.sil.width)
 # silhouette related features (and num.clusters) have no significant influence (large p-values)

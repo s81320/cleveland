@@ -11,6 +11,7 @@ library(caret)
 library(e1071)
 library(cluster)
 library(dplyr)
+library(abind)
 
 # my own code
 source('code/source/distance-matrices-03-scaled01.R') 
@@ -18,7 +19,7 @@ source('code/source/subforest.R') # constructors for a sub-forest (class ranger.
 source('code/source/helper-functions.R')
 
 # read cleveland data
-df <- read.csv('data//Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
+df <- read.csv('data/Cleve.data.csv')[-1] # not elegant, but csv reads an empty first column as X
 
 if(all(dim(df)==c(303,11))){ 
   print('checked dimensions of loaded cleveland dataset: (303,11) : OK')
