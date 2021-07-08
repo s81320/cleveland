@@ -13,7 +13,7 @@ source('code/source/helper-functions.R')
 # load df (with factors) 
 # load docN with N repetitions for 
 ## data splits and the ranger random forest build on the current train set
-load('code/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+load('code/doc-500trees-10rep-5maxDepth-keepInbag.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
 # accuracy of the full forest on the validation set
@@ -81,5 +81,5 @@ plot(baseCase$stats[['sd accuracy ratio']]~baseCase$stats[['number of trees']]
 
 baseCase$stats[['mean accuracy ratio']]
 
-# save(baseCase , file='baseCase500trees.rda')
+save(baseCase , file='baseCase-rs-500trees.rda')
 # load('baseCase500trees.rda')
