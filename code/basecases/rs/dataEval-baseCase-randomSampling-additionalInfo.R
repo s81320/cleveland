@@ -13,18 +13,64 @@ source('code/source/helper-functions.R')
 # load df (with factors) 
 # load docN with N repetitions for 
 ## data splits and the ranger random forest build on the current train set
-load('code/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+load('code/doc-500trees-10rep-5maxDepth-keepInbag.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
-# accuracy of the full forest on the validation set
-aff<-c(rep(0,N))
-par(mfrow=c(1,1))
-for(i in 1:N) aff[i]<-docN[[i]]$accuracy[1]
-boxplot(aff, 
-        main=paste('accuracy full forest, ',N,'repetitons\n(mean:', mean(aff) %>% round(3) , ', sd:', sd(aff) %>% round(3),')'))
-summary(aff)
-# focus on variation , measured by standard deviation
-mean(aff) ; sd(aff)
+#install.packages('abind')
+library(abind)
+# example: turning a list with elements of the same length into a matrix
+abind(docN[[1]]$ranger$inbag.counts, along=2) %>% dim
+
+
+# turn inbag counts for all repetitions and each tree of the respective forest into a cube / 3dim array
+(function(i) {abind(docN[[i]]$ranger$inbag.counts, along=2)}) %>%
+  lapply(1:N,.) %>%
+  abind(along=3) -> 
+  ibc # inbag counts for all repetitions and trees of each forest
+
+# dim(ibc) # check : obs 1:213, tree 1:500 , repetition 1:10
+# these are the oob observations
+# oob<-which(docN[[1]]$ranger$inbag.counts[[i]]==0)
+
+# do the predictions and compare to the true values , using the acc function
+myAcc <-function(i,tri) {
+  
+  which(ibc[,tri,i]==0) -> 
+    oob
+  
+  predict(
+    object=subforest(docN[[i]]$ranger$forest, tri)
+    , data=df[docN[[i]]$train[oob],]
+  ) %>%
+    .$predictions %>%
+    as.numeric ->
+    preds
+  
+  return(acc(preds
+             ,as.numeric(df[docN[[i]]$train[oob],'CAD'] ))
+  )
+}
+
+acc.oob<-outer(X=1:N , Y=1:500, FUN=Vectorize(myAcc)) # X for the repetitions, Y for the trees
+# res[1:2,1:3] # why the Numeric??
+# dim(acc.oob) # check : N , rg$num.trees
+
+# how it is used
+i<-1 # a number in 1:N , a repetition
+trindcs <- c(1,2,3) # randomly sampled trees
+mean(acc.oob[i,trindcs]) # repetition 1, sub-forest of trees 1,2,3 , returning the mean of individual oob accuracy
+
+# we will later be interested in the accuracy of the sub-forest (including ensemble meagic!)
+# of these trees and how they perform on the validation set
+
+p <- predict(subforest(docN[[i]]$ranger$forest, trindcs)
+             ,df[docN[[i]]$val,]
+             )$predictions
+
+acc( p , df[docN[[i]]$val,'CAD'] )
+
+# clean up
+rm(p, i, trindcs)
 
 ####################################
 #### baseline : random sampling ####
@@ -41,8 +87,7 @@ for(i in 1:N){
   val<-docN[[i]]$val
   accff <- docN[[i]]$accuracy[[1]]
   dm<-docN[[i]]$distMatrices$d0
-  preds.v<-predict(forest, data = df[val,], predict.all = TRUE)
-  preds.t<-predict(forest, data = df[test,], predict.all = TRUE)
+  preds<-predict(forest, data = df[val,], predict.all = TRUE)
   for(k in cluster.k){
     # mean accuracy of randomly sampled sub-forests
     for(j in 1:100){
@@ -53,8 +98,9 @@ for(i in 1:N){
                   , paste(trindcs[order(trindcs)],collapse=',') # add this to check if something is strange
                   , ( apsf(forest
                               , trindcs
-                              , df[val,] ) / accff ) %>% round(4) # accuracy ratio
-                  , mean(apply(preds$predictions[,trindcs] , 2, function(vec) acc(vec, as.numeric(df[val,'CAD']))))  %>% round(4) # mean accuracy of sampled trees
+                              , df[val,] ) / accff ) %>% round(4) # accuracy ratio on validation set
+                  , mean(acc.oob[i,trindcs]) # accuracy on oob training data
+                  #, mean(apply(preds$predictions[,trindcs] , 2, function(vec) acc(vec, as.numeric(df[val,'CAD']))))  %>% round(4) # mean accuracy of sampled trees
                   , sum(dm[trindcs,trindcs])/(k*(k-1))  %>% round(4) # mean distance of sampled trees , not using mean
                   )
       ct<-ct+1
@@ -82,6 +128,29 @@ summary(lm1)
 lm2<-lm(accRatio~0+. , data=rs[,c(2,4:6)])
 summary(lm2)
 
-# this is not good:
-# we use single tree accuracy on validation data and find it pos correlated to ensemble accuracy on validation data.
-# we should use oob accuracy of individual trees and look for correlation with performance on validation set
+# this is good, too:
+# we use single tree accuracy on oob training data (it did not go into building the tree) 
+# and find it pos correlated to the accuracy ratio (a scaled ensemble accuracy) on validation data.
+
+####################################################
+#### remains from developing the myAcc function ####
+####################################################
+#### will soon go ... ##############################
+####################################################
+
+# myPred was not used above but is a little less complex than the myAcc function
+# do the predictions on oob training data
+myPred<-function(i,tri) {
+  oob<- which(ibc[,tri,i]==0)
+  predict(
+    object=subforest(docN[[i]]$ranger$forest, tri)
+    , data=df[docN[[i]]$train[oob],]
+    ) %>%
+    .$predictions %>%
+    as.numeric
+}
+
+# how myAcc works : using oob training observations , and predictions on oob observations , put them into acc(.,.)
+# do an apply thing to get accuracies for all predictions of oob obs
+oob<- which(ibc[,1,1]==0)
+acc(myPred(1,1), as.numeric(df[docN[[1]]$train[oob],'CAD']))
