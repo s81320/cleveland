@@ -21,6 +21,8 @@ We randomly sample trees into a sub-forest and document their
 
 We apply a linear model and find that both , the mean distance and the mean oob accuracy significantly (and positively) affect the accuracy ratio on the validation set.
 
+Currently (9th July 2021) it looks like a dissimilarity is not relevant but a good oob accuracy might have a (small) positive influence on the accuracy ratio. 
+
 # further steps
 
-To generate a sub-forest of distant trees we cluster the forest and select its medoids. By construction the medoids are far from each other, their mean distance will be large.
+To generate a sub-forest of distant trees we cluster the forest and select its medoids. By construction the medoids are far from each other, their mean distance will be large. If dissimilarity does not matter then this is just a different kind of random selection. A main aim is to increase accuracy but even at stalling accuracies, reducing the standard deviation would be appreciated...
