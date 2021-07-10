@@ -133,8 +133,89 @@ acc.oob<-outer(X=1:N , Y=1:500, FUN=Vectorize(myAcc)) # X for the repetitions, Y
 # dim(acc.oob) # check : N , rg$num.trees
 
 
-file=paste('code/doc-',rg$num.trees,'trees-',N,'rep-',rg$call$max.depth,'maxDepth-keepInbagTESTRUN.rda',sep='')
+file=paste('data/doc-',rg$num.trees,'trees-',N,'rep-',rg$call$max.depth,'maxDepth-keepInbagTESTRUN.rda',sep='')
 save(df,docN, ibc, acc.oob , file=file)
 message(paste('saved data frame of cleveland data and \ndocumentation of generated splits, forests, forest accuracies, distance matrices, \ninbag counts and oob accuracies for each tree in\n' 
               , file 
               , '\nplease remove TESTRUN from the file name ... if this was not just a test run'))
+
+
+####################################################
+#### remains from developing the myAcc function ####
+####################################################
+#### will soon go ... ##############################
+####################################################
+
+library(abind)
+
+# example: turning a list with elements of the same length into a matrix
+abind(docN[[1]]$ranger$inbag.counts, along=2) %>% dim
+
+# turn inbag counts for all repetitions and each tree of the respective forest into a cube / 3dim array
+(function(i) {abind(docN[[i]]$ranger$inbag.counts, along=2)}) %>%
+  lapply(1:N,.) %>%
+  abind(along=3) -> 
+  ibc # inbag counts for all repetitions and trees of each forest
+
+# dim(ibc) # check : obs 1:213, tree 1:500 , repetition 1:10
+# these are the oob observations
+# oob<-which(docN[[1]]$ranger$inbag.counts[[i]]==0)
+
+# do the predictions and compare to the true values , using the acc function
+myAcc <-function(i,tri) {
+  
+  which(ibc[,tri,i]==0) -> 
+    oob
+  
+  predict(
+    object=subforest(docN[[i]]$ranger$forest, tri)
+    , data=df[docN[[i]]$train[oob],]
+  ) %>%
+    .$predictions %>%
+    as.numeric ->
+    preds
+  
+  return(acc(preds
+             ,as.numeric(df[docN[[i]]$train[oob],'CAD'] ))
+  )
+}
+
+acc.oob<-outer(X=1:N , Y=1:500, FUN=Vectorize(myAcc)) # X for the repetitions, Y for the trees
+# res[1:2,1:3] # why the Numeric??
+# dim(acc.oob) # check : N , rg$num.trees
+
+# how it is used
+i<-1 # a number in 1:N , a repetition
+trindcs <- c(1,2,3) # randomly sampled trees
+mean(acc.oob[i,trindcs]) # repetition 1, sub-forest of trees 1,2,3 , returning the mean of individual oob accuracy
+
+# we will later be interested in the accuracy of the sub-forest (including ensemble meagic!)
+# of these trees and how they perform on the validation set
+
+p <- predict(subforest(docN[[i]]$ranger$forest, trindcs)
+             ,df[docN[[i]]$val,]
+)$predictions
+
+acc( p , df[docN[[i]]$val,'CAD'] )
+
+# clean up
+rm(p, i, trindcs)
+
+
+# myPred was not used above but is a little less complex than the myAcc function
+# do the predictions on oob training data
+myPred<-function(i,tri) {
+  oob<- which(ibc[,tri,i]==0)
+  predict(
+    object=subforest(docN[[i]]$ranger$forest, tri)
+    , data=df[docN[[i]]$train[oob],]
+  ) %>%
+    .$predictions %>%
+    as.numeric
+}
+
+# how myAcc works : using oob training observations , and predictions on oob observations , put them into acc(.,.)
+# do an apply thing to get accuracies for all predictions of oob obs
+oob<- which(ibc[,1,1]==0)
+acc(myPred(1,1), as.numeric(df[docN[[1]]$train[oob],'CAD']))
+
