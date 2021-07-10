@@ -4,6 +4,9 @@
 # the basecase is to select randomly from the full forest.
 # here we explore the strategy to cluster and then create a subforest as the set of medoid trees
 
+# there is no check for performance of the selected trees (like oob accuracy) though we know that is relevant from the pure random sampling 02
+# the next step is to cluster and look for cluster representations with a high oob accuracy
+
 rm(list=ls())
 
 library(dplyr)
@@ -24,10 +27,10 @@ N <- length(docN)
 aff<-c(rep(0,N))
 for(i in 1:N) aff[i]<-docN[[i]]$accuracy[1]
 boxplot(aff, 
-        main=paste('accuracy full forest, ',N,'repetitons\n(mean:', mean(aff) %>% round(3) , ', sd:', sd(aff) %>% round(3),')'))
+        main=paste('accuracy full forest, ',N,'repetitons\n(median:', median(aff) %>% round(3) , ', sd:', sd(aff) %>% round(3),')'))
 summary(aff)
 # focus on variation , measured by standard deviation
-mean(aff) ; sd(aff)
+median(aff) ; mean(aff) ; sd(aff)
 
 ############################################################
 #### build a subforest from clustering (choose medoids) ####
@@ -88,20 +91,20 @@ doc.sf.clus <- doc
 
 file<-'data/basecase-clust-500trees.rda'
 save(doc.sf.clus, file=file)
-#load(file)
+load(file)
 
 doc.sf.clus %>% 
   group_by(metric,num.cluster) %>% 
-  summarise( m=mean(accRatio) )
+  summarise( m=mean(accRatio) , s=sd(accRatio) )
 
 doc.sf.clus %>% 
   group_by(num.cluster) %>% 
-  summarise( m=mean(accRatio) )
+  summarise( m=mean(accRatio) , s=sd(accRatio) )
 
 # remove distance d1 
 doc.sf.clus[doc.sf.clus$metric!='d1',]  %>% 
   group_by(num.cluster) %>% 
-  summarise( m=mean(accRatio) )
+  summarise( m=mean(accRatio) , s=sd(accRatio) )
 
 #######################################################
 ## relevance of clustering quality  ###################
@@ -117,7 +120,7 @@ cor(x=doc.sf.clus$perc.pos.sil.width , y=doc.sf.clus$accRatio)
 
 # first model for all features or all but the accuracy of the pam-clustered sub-forest
 lm.obj.1<-lm(accRatio~0+. , data=doc.sf.clus)
-# lm.obj.1<-lm(accRatio~0+. , data=doc.sf.clus[,c(1:5,7)]) # remove acc.sf.pam, 
+lm.obj.1<-lm(accRatio~0+acc.ff+metric+num.cluster+avg.sil.width , data=doc.sf.clus )# remove acc.sf.pam, 
 # then the accuracy of the full forest is significant
 summary(lm.obj.1)
 # since accRatio = acc.sf.pam / acc.ff we get R-squared almost 1 if we include this information
@@ -126,7 +129,7 @@ summary(lm.obj.1)
 
 # we include only variables that we control: the metric and the number of clusters 
 # no intercept
-lm.obj.2<- lm(accRatio~0
+lm.obj.2<- lm(accRatio~0+
               +metric
               +num.cluster
               , data=doc.sf.clus
@@ -149,8 +152,7 @@ anova(lm.obj.2 , lm.obj.3, test="Chisq")
 # ... they are not. We stick with the simpler model of metric and num.cluster, without interactions
 
 # including silouhette related features as predictors
-lm.obj.4<- lm(accRatio~0
-              +metric
+lm.obj.4<- lm(accRatio~0+metric
               +num.cluster
               +avg.sil.width
               +perc.pos.sil.width
