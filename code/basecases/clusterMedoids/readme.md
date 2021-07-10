@@ -4,7 +4,9 @@ From a random forest, build a clustering of its trees. From each cluster choose 
 
 The difference from random sampling / base case 1 is that trees have a high distance from each other. This is one of the main aspects of clustering: trees clusterd toghether are close, trees clustered into different clusters are far. While this need not always hold and trees on the edge of a cluster may be quite close to trees from another cluster, it does hold for trees at the center of a cluster: Medoids of (different) clusters are far from each other.
 
-## results
+## 1. results 
+
+Result from the script dataEval-justCluster-final.R
 
 we report cluster sizes and mean accuracy ratios (*accuracy ratio* : ratio / quotient of the full forest's accuracy and the accuracy of the sub-forest , *mean* over the different metrices and 10 repetitions of new data splits and random forests grown anew on each training set)
 
@@ -41,3 +43,11 @@ d0 | 1.08 | 0.1
 d1 | 1.1 | 0.12
 d2 | 1.11 | 0.11
 sb | 1.08 | 0.08
+
+# 2. results - in progress
+
+Script file dataEval-cluster-selectHighOObAcc-02.R
+
+We select a subforest from cluster medoids (far apart trees) that also have a high oob accuracy on the training data (on observations from the training set that were not actually used to build the tree). In the first base case (random sampling) we have seen (using a linear model) that a high oob accuracy positively affects the accuracy ratio.
+
+![](plot.png) | ![](plot2.png)
