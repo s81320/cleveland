@@ -56,8 +56,6 @@ trainN <- createDataPartition(df$CAD
                             , p=0.7
                             , times=N)
 
-class(trainN)
-
 splitN<-list(train=list(),val=list(),test=list())
 
 for(i in 1:N){
@@ -135,24 +133,10 @@ for(i in 1:N){
 #### 4. calculate oob accuracies ####
 #####################################
 
-library(abind)
-# turn inbag counts for all repetitions and each tree of the respective forest into a cube / 3dim array
-(function(i) {abind(rangerN[[i]]$inbag.counts, along=2)}) %>%
-  lapply(1:N,.) %>%
-  abind(along=3) -> 
-  ibc # inbag counts for all repetitions and trees of each forest
-
-# dim(ibc) # check : obs 1:213, tree 1:500 , repetition 1:10
-# these are the oob observations
-# oob<-which(docN[[1]]$ranger$inbag.counts[[i]]==0)
-
-### !!!! #### NEW VERSION 02 : arguments changed order ; tree first , repetiton second #### !!! ####
-# do the predictions and compare to the true values , using the acc function
 myAcc <-function(tri,i) {
   
-  which(ibc[,tri,i]==0) -> 
-    oob
-  
+  oob<-which(rangerN[[i]]$inbag.counts[[tri]]==0)
+
   predict(
     object=subforest(rangerN[[i]], tri)
     , data=df[splitN$train[[i]][oob],]
@@ -166,7 +150,6 @@ myAcc <-function(tri,i) {
   )
 }
 
-ibc[,1,1]
 myAcc(1,1)
 
 acc.oob.matrix<-outer(X=1:500 , Y=1:N, FUN=Vectorize(myAcc)) # X for the repetitions, Y for the trees
@@ -178,15 +161,27 @@ for(i in 1:N){
   acc.oob[[i]]<-acc.oob.matrix[,i]
 }
 
+acc.ff<-list(val=rep(0,N), test=rep(0,N),val.minus.test=rep(0,N))
+for(i in 1:N){
+  val<- splitN$val[[i]]
+  test<-splitN$test[[i]]
+  acc.ff$val[i]<- acc( predict(rangerN[[i]]$forest
+                                , df[val,])$predictions,df[val,'CAD'])
+  acc.ff$test[i]<-acc(predict(rangerN[[i]]$forest, df[test,])$predictions,df[test,'CAD'])
+}
+acc.ff$val.minus.test <- acc.ff$val - acc.ff$test
+
+
 #### save rda object ####
 #########################
 
 dataGen02<-list('info'=paste('created with dataGeneration-split-02.R at', Sys.time() ) 
+     , 'N'=N
      , 'df'=df
      , 'splitN'= splitN
      , 'rangerN'=rangerN 
      , 'dmN'= dmN 
-     , 'ibc'= ibc 
+     , 'acc.ff'=acc.ff
      , 'acc.oob'=acc.oob)
 
 file=paste('data/10forests/',rangerN[[1]]$num.trees,'trees-',N,'rep-',rangerN[[1]]$call$max.depth,'maxDepth-keepInbagTESTRUN.rda',sep='')
@@ -194,4 +189,3 @@ save(dataGen02 , file=file)
 message(paste('saved data frame of cleveland data and \ndocumentation of generated splits, forests, forest accuracies, distance matrices, \ninbag counts and oob accuracies for each tree in\n' 
               , file 
               , '\nplease remove TESTRUN from the file name ... if this was not just a test run'))
-
