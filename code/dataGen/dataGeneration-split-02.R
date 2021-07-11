@@ -8,16 +8,15 @@
 # splitN : N repetitions of splitting the observations in the cleveland data into training, validation and test sets
 # rangerN : N ranger objects , each built from a separate training split generated in splitN
 # dmN : 4*N distance matrices, 4 for each ranger forest from rangerN
-# ibc : the inbag counts from the ranger objects in gangerN (not of interest in itself, needed for acc.oob)
+# accuracies for the full forests (on validation and training sets)
 # acc.oob : out of bag accuracies for each tree in each forest 
 
 rm(list=ls())
 library(ranger)
 library(caret)
-#library(e1071)
-library(cluster)
+#library(cluster)
 library(dplyr)
-#library(abind)
+
 
 # my own code
 source('code/source/distance-matrices-03-scaled01.R') 
@@ -110,7 +109,6 @@ for(i in 1:N){
 ########################################
 
 metrices <- c('d0','d1','d2','sb')
-# metrices<- c('d0','sb') # only for less waiting when testing
 
 dmN <- list()
 for(m in metrices){
@@ -122,9 +120,9 @@ for(i in 1:N){
   forest<-rangerN[[i]]$forest
   train<- splitN$train[[i]]
   
+  # print(paste('loop', i, 'start at', Sys.time()) )
+  
   for(metric in metrices){
-    
-    # print(paste('loop', i, 'start' , metric , 'at', Sys.time()) )
     
     dmN[[metric]][[i]]<-createDM(forest=forest, type=metric , dft=df[train,])
 }
@@ -135,22 +133,27 @@ for(i in 1:N){
 
 myAcc <-function(tri,i) {
   
-  oob<-which(rangerN[[i]]$inbag.counts[[tri]]==0)
+  train <- splitN$train[[i]]
+  sf <- subforest(rangerN[[i]], tri)
+  
+  inbag.counts <- rangerN[[i]]$inbag.counts[[tri]]
+  oob<-which(inbag.counts==0)
 
   predict(
-    object=subforest(rangerN[[i]], tri)
-    , data=df[splitN$train[[i]][oob],]
+    object = sf
+    , data = df[train[oob],]
   ) %>%
     .$predictions %>%
     as.numeric ->
     preds
   
   return(acc(preds
-             ,as.numeric(df[splitN$train[[i]][oob],'CAD'] ))
+             ,as.numeric(df[train[oob],'CAD'] ))
   )
 }
 
-myAcc(1,1)
+# check
+# myAcc(1,1)
 
 acc.oob.matrix<-outer(X=1:500 , Y=1:N, FUN=Vectorize(myAcc)) # X for the repetitions, Y for the trees
 # res[1:2,1:3] # why the Numeric??
@@ -162,6 +165,7 @@ for(i in 1:N){
 }
 
 acc.ff<-list(val=rep(0,N), test=rep(0,N),val.minus.test=rep(0,N))
+
 for(i in 1:N){
   val<- splitN$val[[i]]
   test<-splitN$test[[i]]
@@ -186,6 +190,6 @@ dataGen02<-list('info'=paste('created with dataGeneration-split-02.R at', Sys.ti
 
 file=paste('data/10forests/',rangerN[[1]]$num.trees,'trees-',N,'rep-',rangerN[[1]]$call$max.depth,'maxDepth-keepInbagTESTRUN.rda',sep='')
 save(dataGen02 , file=file)
-message(paste('saved data frame of cleveland data and \ndocumentation of generated splits, forests, forest accuracies, distance matrices, \ninbag counts and oob accuracies for each tree in\n' 
+message(paste('saved data frame of cleveland data and \ndocumentation of generated splits, forests, forest accuracies, distance matrices, \n oob accuracies for each tree in\n' 
               , file 
               , '\nplease remove TESTRUN from the file name ... if this was not just a test run'))
