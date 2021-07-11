@@ -1,6 +1,8 @@
 we work with the cleveland data , split it into training, validation and test set and grow a ranger random forest on the training set...
 
-And whatever comes next, it will also / maybe only slightly depend on how we split the data. To avoid this we create multiple data splits and grow a new forest on each training set. (We could have grown multiple forests on each training set, and we did, and we found there is little variation in the forests built on the same training set. What we could do is: work with larger forests...)
+And whatever comes next, it will also / maybe only slightly depend on how we split the data. To avoid this we create multiple data splits and grow a new forest on each training set. (We could have grown multiple forests on each training set, and we did, and we found there is little variation in accuracies for forests built on the same training set. What we could do is: work with larger forests...)
+
+Speaking of variation: (probably) depending on the data split our (full) forests sometimes perform quite differently on the validation and test sets (cf accuracies$val.minus.test in dataGen02 , cf 02 below). And that is important for us: Whenever trying to be smart and to select a (small) subforest with a hopefully high accuracy and testing it on the test set, what good will it do if the testset is pretty close to the training data ... or not. We do not want test set qualities to reflect on our selection. One way to avoid this is to have multiple test sets. (we could have done k-fold cross validation. At the moment we only have independent data splits)
 
 # data generation
 
