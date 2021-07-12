@@ -38,8 +38,11 @@ median(aff) ; mean(aff) ; sd(aff)
 #### baseline : random sampling ####
 ####################################
 
-size.sf<-c(3,5,7,11,13)
+size.sf<-c(3,5,7,11,13,17)
 #size.sf<-c(10,20,30,40,50)
+
+# set.seed(2020)
+set.seed(1237)
 
 rs<-data.frame()
 for(i in 1:N){
@@ -50,7 +53,7 @@ for(i in 1:N){
   rs<-rbind(rs,new.row)
   for(k in size.sf){
     # mean accuracy of randomly sampled sub-forests
-    for(j in 1:10){
+    for(j in 1:100){
       acc.sf<- apsf(forest
                     , sample(1:forest$num.trees, k, replace = FALSE)
                     , df[val,])
@@ -78,9 +81,9 @@ names(stats)<- c('size','mean.acc.ratio','sd.acc.ratio','mean.acc','sd.acc')
 
 baseCase<- list(rs=rs , stats=stats)
 #stats
-rm(rs,stats)
+#rm(rs,stats)
 
-save(baseCase , file='data/baseCase-rs-500trees.rda')
+save(baseCase , file='data/baseCase-rs-01-500trees.rda')
 #load('data/baseCase-rs-500trees.rda')
 
 ###################
@@ -106,7 +109,8 @@ plot(mean.acc.ratio~size
      , ylab='accuracy ratio'
      , type='b')
 # numeric values just plotted
-baseCase$stats[['mean.acc.ratio']] # sizes in size.sf , and for the full forest
+baseCase$stats$mean.acc.ratio # sizes in size.sf , and for the full forest
+baseCase$stats$sd.acc.ratio
 
 plot(sd.acc.ratio~size.sf 
      , data=baseCase$stats[baseCase$stats$size<500,]

@@ -48,6 +48,6 @@ sb | 1.08 | 0.08
 
 Script file dataEval-cluster-selectHighOObAcc-02.R
 
-We select a subforest from cluster medoids (far apart trees) that also have a high oob accuracy on the training data (on observations from the training set that were not actually used to build the tree). In the first base case (random sampling) we have seen (using a linear model) that a high oob accuracy positively affects the accuracy ratio.
+We select a subforest from cluster medoids (far apart trees) that also have a high oob accuracy on the training data (on observations from the training set that were not actually used to build the tree). In the first base case (random sampling) we have seen (using a linear model) that a high oob accuracy might positively affect the accuracy ratio.
 
 ![](plot.png) | ![](plot2.png)
