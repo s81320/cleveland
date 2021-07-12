@@ -41,13 +41,14 @@ nRS<-100 # number of random samples per full forest
 rs<- list()
 p<-0.1
 
-assertthat::assert_that(p*rangerN[[1]]$num.trees >= max(size.sf))
+assertthat::assert_that(p*rangerN[[1]]$num.trees >= max(size.sf)
+                        , msg('p too small or the maximum size of the sub-forest too big. Or too few trees in the full forest.'))
 
 set.seed(1237)
 for(i in 1:N){
-rs[[i]]<- createDataPartition(y=1:500 , p=p , times =nRS )
+rs[[i]]<- createDataPartition( y=1:500 , p=p , times =nRS )
 }
-rs[[1]]
+# rs[[N]][[nRS]] # 1st index for repetition , 2nd for the partition
 
 # samples for different sizes will be from the same partition
 # directly ...
@@ -85,7 +86,8 @@ for(i in 1:N){
         round(5)->
         moa.sf[k,j,i]
       
-      assertthat::assert_that(size.sf[k]==length(trindcs), msg = 'size of sub-forest and length of tree indices do not match')
+      assertthat::assert_that(size.sf[k]==length(trindcs)
+                              , msg = 'size of sub-forest and length of tree indices do not match')
       (sum(dm[trindcs,trindcs])/(size.sf[k]*(size.sf[k]-1)))  %>% 
         round(5) ->
         md.sf[k,j,i]
