@@ -3,10 +3,13 @@
 # doing all sampling as one step, then proceed to next step. 
 # Instead of generating one sample, working with it and then generating the next sample
 
+# new: visualize the random selection in tree space
+
 rm(list=ls())
 
 library(dplyr)
 library(ranger)
+library(caret)
 
 source('code/source/subforest.R') # constructors for a sub-forest (class ranger.forest) and its hull (class ranger)
 source('code/source/helper-functions.R')
@@ -29,10 +32,10 @@ acc.oob <- dataGen02$acc.oob
 ########################################################
 
 #size.sf<-c(3,5)
-size.sf<-c(3,5,7,11,13)
+size.sf<-c(3,5,7,11,13,17)
 #size.sf<-c(10,20,30,40,50)
 
-nRS<-10 # number of random samples per full forest 
+nRS<-100 # number of random samples per full forest 
 # will generate nRS samples in each size for the sub-forest as specified in size.sf
 
 rs<- list()
@@ -40,6 +43,7 @@ p<-0.1
 
 assertthat::assert_that(p*rangerN[[1]]$num.trees >= max(size.sf))
 
+set.seed(1237)
 for(i in 1:N){
 rs[[i]]<- createDataPartition(y=1:500 , p=p , times =nRS )
 }
@@ -64,7 +68,7 @@ md.sf  <- array(0, dim=c(length(size.sf), nRS , N))
 for(i in 1:N){
   forest <- rangerN[[i]]$forest
   val <- splitN$val[[i]]
-  dm <- dmN$d1[[i]]
+  dm <- dmN$d0[[i]]
   ao <- acc.oob[[i]]
   
   for(j in 1:nRS){
@@ -81,7 +85,7 @@ for(i in 1:N){
         round(5)->
         moa.sf[k,j,i]
       
-      # error size = 3 has md.sf = Inf 
+      assertthat::assert_that(size.sf[k]==length(trindcs), msg = 'size of sub-forest and length of tree indices do not match')
       (sum(dm[trindcs,trindcs])/(size.sf[k]*(size.sf[k]-1)))  %>% 
         round(5) ->
         md.sf[k,j,i]
@@ -131,6 +135,8 @@ stats<-td %>%
   data.frame()
 
 stats
+
+# why is the mean of the mean oob accuracy so high, 81% ? The full forest has much less, 77%
 
 #baseCase02<- list(info='sunny today 8-July-2021 :-)' , rs=rs , stats=stats)
 
