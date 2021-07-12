@@ -158,11 +158,15 @@ myAcc <-function(tri,i) {
 acc.oob.matrix<-outer(X=1:500 , Y=1:N, FUN=Vectorize(myAcc)) # X for the repetitions, Y for the trees
 # res[1:2,1:3] # why the Numeric??
 # dim(acc.oob) # check : N , rg$num.trees
+mean(acc.oob.matrix) # this is rather high compared to the forests validation accuracy of around 0.76
 
 acc.oob<- list()
 for(i in 1:N){
   acc.oob[[i]]<-acc.oob.matrix[,i]
 }
+
+#########################
+
 
 acc.ff<-list(val=rep(0,N), test=rep(0,N),val.minus.test=rep(0,N))
 
