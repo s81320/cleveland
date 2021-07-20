@@ -162,12 +162,12 @@ arc.all.medoids<-doc.sf.clus %>%
   group_by(num.cluster) %>% 
   summarise( m=mean(accRatio) , sd=sd(accRatio))
 
-# accuracy ratio clustered when previously selected th high performers (high oob acc on training)
+# accuracy ratio clustered when previously selected high performers (high oob acc on training)
 arc.hp.medoids<-doc.sf.clus %>% 
   group_by(num.cluster) %>% 
   summarise( m=mean(accRatio) , sd=sd(accRatio))
 
-# accuracy ratio clustered when previously selected th high performers (high oob acc on training)
+# accuracy ratio clustered when previously confusing the dissimilarity matrix (indices 500:1 instead of 1:500)
 arc.confused<-doc.sf.clus %>% 
   group_by(num.cluster) %>% 
   summarise( m=mean(accRatio) , sd=sd(accRatio))
