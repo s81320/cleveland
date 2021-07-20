@@ -1,7 +1,7 @@
 # the 1st basecase is to select randomly from the full forest.
 
 # here, in the 2nd basecase, we explore the strategy to cluster and then create a subforest as the set of medoid trees
-# further more we initially exclude trees with a low oob accuracy
+# we initially exclude trees with a low oob accuracy
 
 rm(list=ls())
 
@@ -50,7 +50,6 @@ dm<-dm[trindcs,trindcs]
 
 forest <- subforest(docN[[i]]$ranger$forest , trindcs)
 
-
 ############################################################
 #### build a subforest from clustering (choose medoids) ####
 ############################################################
@@ -74,10 +73,11 @@ for(i in 1:N){
   
   doc.i<-data.frame()
   # rg<-docN[[i]]$ranger
-  val<-docN[[i]]$val
+  val<-docN[[i]]$val # validation set in current split
   accff<-docN[[i]]$accuracy['val']
   
   # trees to keep
+  # select high performers (high oob acc)
   trindcs <- order(acc.oob[i,])[351:500]
   # for testing : keep all trees!
   #trindcs <- 1:500
@@ -88,10 +88,12 @@ for(i in 1:N){
   for(metric in metrices){
     
     dm.m<-docN[[i]]$distMatrices[[metric]]
+    
+    # next line creates confusion . If the results do not reflect this (by getting worse) then there is something wrong
+    #dm.m<-dm.m[500:1,500:1] # reverse order, this should confuse things ... but if it is random anyway then it does not matter??
+    
     # modify distance matrix
     dm.m<-dm.m[trindcs,trindcs]
-    #dm.m<-dm.m[500:1,500:1] # reverse order, this should confuse things ... but if it is random anyway then it does not matter??
-    doc.m<-data.frame()
     
     for(k in cluster.k){
       pam.obj <- cluster::pam(dm.m
@@ -144,7 +146,9 @@ doc.sf.clus <- doc
 
 # compare accuracy ratios to random sampling base case : any improvement?
 
-load("data/baseCase02-rs-500trees.rda")
+load("data/10forests/baseCase02-rs-500trees.rda")
+baseCase02$info
+
 baseCase02$stats$mean.acc.ratio
 
 # accuracy ratio:
@@ -153,28 +157,42 @@ baseCase02$stats$mean.acc.ratio
 #  group_by(num.cluster) %>% 
 #  summarise( m=mean(accRatio) , sd=sd(accRatio))
 
-arc3<-doc.sf.clus %>% 
+# when keeping all trees, this is the clean clustering and selecting the medoids
+arc.all.medoids<-doc.sf.clus %>% 
   group_by(num.cluster) %>% 
   summarise( m=mean(accRatio) , sd=sd(accRatio))
-arc3
 
-# disappointing
+# accuracy ratio clustered when previously selected th high performers (high oob acc on training)
+arc.hp.medoids<-doc.sf.clus %>% 
+  group_by(num.cluster) %>% 
+  summarise( m=mean(accRatio) , sd=sd(accRatio))
+
+# accuracy ratio clustered when previously selected th high performers (high oob acc on training)
+arc.confused<-doc.sf.clus %>% 
+  group_by(num.cluster) %>% 
+  summarise( m=mean(accRatio) , sd=sd(accRatio))
+
+# disappointing?
 xgrid<-cluster.k
 plot(x=xgrid
      , y=baseCase02$stats$mean.acc.ratio[1:5] 
      , type='b'
+     , ylim=c(0.94,1)
      , main='base cases'
      , xlab='forest size'
      , ylab='accuracy ratio'
      )
-#points(xgrid, arc$m, type = 'b' , col='green') # pam sub-forest, confused dissimilarity
-points(xgrid, arc2$m, type = 'b' , col='blue') # pam sub-forest, clustered from full forest
-points(xgrid, arc3$m, type = 'b' , col='red') # pam sub-forest, low ooc acc trees removed, size of forest halved
+points(xgrid, arc.confused$m, type = 'b' , col='green') # pam sub-forest, confused dissimilarity , 500:1 instead of 1:500
+points(xgrid, arc.all.medoids$m, type = 'b' , col='blue') # pam sub-forest, clustered from full forest
+points(xgrid, arc.hp.medoids$m, type = 'b' , col='red') # pam sub-forest, low ooc acc trees removed, size of forest halved
 legend("bottomright" 
        , legend=c("random sampling", "cluster medoids, confused", "cluster medoids","cluster medoids, hp")
        , col=c('black','green','blue','red')
        , pch='o'
        , cex=0.8) 
+
+# clustered high performers are always above random sampling
+# not by much . and not close to 1 . well ...
 
 # accuracy , not accuracy ratio:
 doc.sf.clus %>% 
