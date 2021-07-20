@@ -35,7 +35,7 @@ acc.oob <- dataGen02$acc.oob
 size.sf<-c(3,5,7,11,13,17)
 #size.sf<-c(10,20,30,40,50)
 
-nRS<-100 # number of random samples per full forest 
+nRS<-10 # number of random samples per full forest 
 # will generate nRS samples in each size for the sub-forest as specified in size.sf
 
 
@@ -57,26 +57,28 @@ rs[[i]]<- createDataPartition( y=1:500 , p=p , times =nRS )
 
 # samples for different sizes will be from the same partition
 # directly ...
-s<-2
-rs[[1]][[1]][1:size.sf[s]]
-# ... or vectorised
-a<-Vectorize(function(s)rs[[1]][[1]][1:s])
-a(size.sf)
-# results in nested samples
+# uncomment to check how rs and size.sf work toghether
+#s<-2
+#rs[[1]][[1]][1:size.sf[s]]
+## ... or vectorised
+#a<-Vectorize(function(s)rs[[1]][[1]][1:s])
+#a(size.sf)
+## results in nested samples
 
 #### for each subforest calculate ########################################
 #### accuracies on validation set , mean oob accuracy , mean distance ####
 #### results : acc.sf , moa.sf , md.sf ###################################
 ##########################################################################
 
-acc.sf <- array(0, dim=c(length(size.sf), nRS , N))
-moa.sf <- array(0, dim=c(length(size.sf), nRS , N))
-md.sf  <- array(0, dim=c(length(size.sf), nRS , N))
+acc.sf <- array(0, dim=c(length(size.sf), nRS , N)) # accuracy subforest
+moa.sf <- array(0, dim=c(length(size.sf), nRS , N)) # mean oob accuracy of trees in sub-forest
+md.sf  <- array(0, dim=c(length(size.sf), nRS , N)) # mean distance among trees in sub-forest
 
 for(i in 1:N){
   forest <- rangerN[[i]]$forest
   val <- splitN$val[[i]]
-  dm <- dmN$d0[[i]]
+  metric<-'d0'
+  dm <- dmN[[metric]][[i]]
   ao <- acc.oob[[i]]
   
   for(j in 1:nRS){
@@ -90,12 +92,13 @@ for(i in 1:N){
         acc.sf[k,j,i]
       
       mean(ao[trindcs]) %>% 
-        round(5)->
+        round(5) ->
         moa.sf[k,j,i]
       
       assertthat::assert_that(size.sf[k]==length(trindcs)
                               , msg = 'size of sub-forest and length of tree indices do not match')
-      (sum(dm[trindcs,trindcs])/(size.sf[k]*(size.sf[k]-1)))  %>% 
+     
+       (sum(dm[trindcs,trindcs])/(size.sf[k]*(size.sf[k]-1)))  %>% 
         round(5) ->
         md.sf[k,j,i]
       
@@ -106,7 +109,32 @@ for(i in 1:N){
 #### save generated raw data ####
 # save rs, acc.sf , moa.sf , md.sf
 
-#### turn acc.sf, moa.sf ,md.sf into a tidy data table ####
+baseCase.rs.sf<- list(info=paste('created with : dataEval-baseCase-rs-03.R'
+                                 , '\n date : ',Sys.time()
+                                 , '\n content :  '
+                                 , '\n * rs : random samples of tree indices' 
+                                 , '\n the first 3,5,7... of each sample define the subforest of the desired size, subforests are nested'
+                                 , '\n * size.sf : for the subforest sizes used in the following'
+                                 , '\n * acc.sf : accuracy of each sub-forest'
+                                 , '\n * moa.sf : mean oob accuracy for each sub-forest'
+                                 , '\n * md.sf : mean dissimilarity for each subforest (only one dissimilarity used)'
+                                 , '\n * metric : the dissimilarity metric used in md.sf')
+                      , content = c('rs','size.sf','acc.sf','moa.sf','md.sf','metric')
+                      , rs=rs
+                      , size.sf=size.sf
+                      , acc.sf=acc.sf
+                      , moa.sf=moa.sf
+                      , md.sf=md.sf
+                      , metric=metric
+                      )
+
+file='data/10forests/baseCase-rs-sf.rda'
+#save(baseCase.rs.sf , file=file)
+#load(file)
+#baseCase.rs.sf$info %>% cat()
+#baseCase.rs.sf$content
+
+##### turn acc.sf, moa.sf ,md.sf into a tidy data table ####
 #### result : td ##########################################
 ###########################################################
 

@@ -23,8 +23,11 @@ N <- length(docN)
 size.sf<-c(3,5,7,11,13,17)
 #size.sf<-c(10,20,30,40,50)
 
-nRS<-100 # number of random samples
-rs<-data.frame(matrix(0,nrow=length(size.sf)*N*nRS+N,ncol=7)) 
+nRS<-10 # number of random samples
+rs<-data.frame(matrix(0
+                      ,nrow=length(size.sf)*N*nRS+N
+                      ,ncol=7)
+               ) 
 # *nRS because we have nRS different random samples per full forest and per size.sf
 # cf for(j in 1:nRS){ ...
 # +N do also document the accuracies of the full forest, and we have N of them
