@@ -17,7 +17,7 @@ source('code/source/helper-functions.R')
 # load list dataGen02 with info
 load('data/10forests/500trees-10rep-5maxDepth-keepInbag.rda') 
 
-dataGen02$info
+{dataGen02$info
 N <- dataGen02$N
 df<- dataGen02$df 
 splitN <- dataGen02$splitN
@@ -25,6 +25,7 @@ rangerN <- dataGen02$rangerN
 dmN <- dataGen02$dmN
 acc.ff <- dataGen02$acc.ff
 acc.oob <- dataGen02$acc.oob
+}
 
 ########################################################
 #### baseline : random sampling ########################
@@ -53,7 +54,14 @@ set.seed(1237)
 for(i in 1:N){
 rs[[i]]<- createDataPartition( y=1:500 , p=p , times =nRS )
 }
-# rs[[N]][[nRS]] # 1st index for repetition , 2nd for the partition
+rs[[N]][[nRS]] # 1st index for repetition , 2nd for the partition
+
+# samples are in sequential order of trees , not exactly what we want. We create permutations to remove the ordering
+for(i in 1:length(rs)){
+  for(j in 1:length(rs[[1]])){
+    rs[[i]][[j]]<- sample(rs[[i]][[j]])
+  }
+}
 
 # samples for different sizes will be from the same partition
 # directly ...
@@ -157,7 +165,9 @@ for(i in 1:N){
 }
 
 # add column for acc ratio
-td$acc.ratio <- td$acc.sf / td$acc.ff
+td$acc.ratio <- td$acc.sf / td$acc.ff %>% round(5)
+
+write.csv(td , "data/td.csv", row.names = FALSE)
 
 #### do other things ####
 #########################
