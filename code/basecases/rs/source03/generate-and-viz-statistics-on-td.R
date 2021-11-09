@@ -1,6 +1,7 @@
 # to be sourced from dataEval-baseCase-rs-03.R
 
 # required input / data : td
+td<-read.csv("data/td.csv")
 # builds statistics on td and visualises the statistics
 # saves statistics to .rda (-> you can also load the previously saved statistics)
 
@@ -34,8 +35,8 @@ baseCase.rs.stats<- list(info=paste('created with source03/generate-an-viz.R on'
 
 file='data/10forests/baseCase-rs-stats.rda'
 #save(baseCase.rs.stats , file=file)
-#load(file)
-#stats<-baseCase.rs.stats$stats
+load(file)
+stats<-baseCase.rs.stats$stats
 
 #### visualisations for the generated statistics ####
 #####################################################

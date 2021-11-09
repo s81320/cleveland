@@ -1,7 +1,19 @@
 # source this at the end of dataEval-baseCase-rs-03.R t
 
 # needs loaded data at the beginning of dataEval-baseCase-rs-03.R
-# (only) needs rs generated at the beginning of dataEval-baseCase-rs-03.R
+#### to load the required data : uncomment
+# load list dataGen02 with info
+#load('data/10forests/500trees-10rep-5maxDepth-keepInbag.rda') 
+#dataGen02$info
+#dmN <- dataGen02$dmN
+#acc.ff<-dataGen02$acc.ff
+
+# needs randomly sampled sub forests rs
+#load('data/10forests/baseCase-rs-sf.rda')
+#baseCase.rs.sf$info %>% cat()
+#baseCase.rs.sf$content
+#rs<-baseCase.rs.sf$rs
+#acc.sf<-baseCase.rs.sf$acc.sf
 
 ###################################################
 #### visualize the selected trees in treespace ####
@@ -23,14 +35,22 @@ y <- m$points[, 2]
 size.sf<-c(3,5,7,11,13,17)
 
 for(j in 1:2){ # look at 3 repetitions
+  xlim<-c(min(x[rs[[i]][[j]][1:max(size.sf)]])
+          ,max(x[rs[[i]][[j]][1:max(size.sf)]]))
+  ylim<-c(min(y[rs[[i]][[j]][1:max(size.sf)]])
+          ,max(y[rs[[i]][[j]][1:max(size.sf)]]))
   for(k in 1:length(size.sf)){
     s<-size.sf[k]
     trindices<-rs[[i]][[j]][1:s]
-    plot(x[trindices]
-         , y[trindices]
-         , pch = 19
-        , xlim = c(-0.15,0.15)
-        , ylim=c(-0.15,0.15) 
+    x.plot<-x[trindices]
+    y.plot<-y[trindices]
+    plot(x=x.plot
+        , y=y.plot
+        , pch = 19
+        , xlim = xlim
+        , ylim= ylim
+        , xlab = 'cmdscale x'
+        , ylab = 'cmdscale y'
         , main=paste('i=',i,', j=',j,', size=',s,', acc=',acc.sf[k,j,i]%>%round(4) ,'acc.ratio=', (acc.sf[k,j,i]/acc.ff$val[[i]])%>%round(4) ))
   }
 }
@@ -40,20 +60,23 @@ for(j in 1:2){ # look at 3 repetitions
 #### Look at how the accuracy , accuracy ratio evolves as we add trees ####
 ###########################################################################
 
-J<-2 # limit for j , j will be in 1:J
-# use x=size.sf , y=data to be plottet to get the x axis labels right...
-plot(acc.sf[,1,i], type='b', ylim=c(0.6,0.9)
-     , xlab=paste('forest sizes', paste(size.sf,collapse = ','))
+J<-3 # limit for j , j will be in 1:J
+# use x=size.sf , y=data to be plotted to get the x axis labels right...
+plot(x=size.sf
+     , y=acc.sf[,1,i]
+     , type='b'
+     , ylim=c(0.6,0.9)
+     , xlab='forest sizes'
      , ylab='accuracy'
      , main='randomly sampled subforests, size increasing\n(nested subforests, increase by adding trees)')
 legend('bottomright',legend=paste('j=',c(1:J)), col=c(1:J),pch='o')
 for(j in 2:J){
-  points(acc.sf[,j,i], type='b', col=j)
+  points(x=size.sf , y=acc.sf[,j,i], type='b', col=j)
 }
 
 
 # can we get an indicator: when does the plot line increase, when does it decrease?
-# depending on proprties of the added trees (in relation to the alread present / selected trees)?
+# depending on properties of the added trees (in relation to the already present / selected trees)?
 
 ###########################################################################
 #### remove trees from a forest ###########################################

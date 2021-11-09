@@ -49,8 +49,8 @@ read / load
 * a random forest of class ranger
 * distance matrices from 4 metrices (d0,d1,d2 of Banerjee, sb: Shannon-Banks metric in Chipman paper)
 ```{r}
-setwd("~/Documents/ds/sem4/thesis/cleveland-01")
-load('code/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
+#setwd("~/Documents/ds/sem4/thesis/cleveland-01")
+load('data/doc-500trees-10rep-5maxDepth.rda') # adds df (cleveland data set) and docN (10 times: datasplit, RF, distance matrices)
 N <- length(docN)
 
 train<-docN[[1]]$train
