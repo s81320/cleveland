@@ -1,0 +1,87 @@
+digraph fbt {
+forcelabels=true ;
+"0" [label="9" color= black]
+"0"->"1"
+"0"->"2"
+"1" [label="7" color= black]
+"1"->"3"
+"1"->"4"
+"2" [label="0" color= black]
+"2"->"5"
+"2"->"6"
+"3" [label="1" color= black]
+"3"->"7"
+"3"->"8"
+"4" [label="7" color= black]
+"4"->"9"
+"4"->"10"
+"6" [label="9" color= black]
+"6"->"11"
+"6"->"12"
+"7" [label="4" color= black]
+"7"->"13"
+"7"->"14"
+"8" [label="6" color= black]
+"8"->"15"
+"8"->"16"
+"9" [label="4" color= black]
+"9"->"17"
+"9"->"18"
+"11" [label="3" color= black]
+"11"->"19"
+"11"->"20"
+"12" [label="3" color= black]
+"12"->"21"
+"12"->"22"
+"13" [label="3" color= black]
+"13"->"23"
+"13"->"24"
+"15" [label="9" color= black]
+"15"->"25"
+"15"->"26"
+"16" [label="3" color= black]
+"16"->"27"
+"16"->"28"
+"17" [label="0" color= black]
+"17"->"29"
+"17"->"30"
+"18" [label="8" color= black]
+"18"->"31"
+"18"->"32"
+#
+#
+#
+#
+#
+#
+#
+#
+"5" [label="No" color= green]
+#
+#
+#
+#
+"10" [label="Yes" color= red]
+#
+#
+#
+"14" [label="Yes" color= red]
+#
+#
+#
+#
+"19" [label="Yes" color= red]
+"20" [label="No" color= green]
+"21" [label="No" color= green]
+"22" [label="Yes" color= red]
+"23" [label="No" color= green]
+"24" [label="No" color= green]
+"25" [label="Yes" color= red]
+"26" [label="Yes" color= red]
+"27" [label="No" color= green]
+"28" [label="No" color= green]
+"29" [label="No" color= green]
+"30" [label="No" color= green]
+"31" [label="No" color= green]
+"32" [label="Yes" color= red]
+}
